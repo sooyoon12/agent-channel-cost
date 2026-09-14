@@ -1,0 +1,13 @@
+{
+  "input_items": [
+    {"role": "system", "content": "도구를 정확히 사용하라."},
+    {"role": "user", "content": "민지의 일정을 찾아줘."},
+    {"type": "function_call", "name": "search_calendar", "arguments": "{\"person\":\"민지\"}"},
+    {"type": "function_call_output", "call_id": "call_1", "output": "{\"date\":\"2026-09-17\"}"}
+  ],
+  "current_output_items": [
+    {"type": "reasoning", "summary": []},
+    {"type": "function_call", "name": "select_event", "arguments": "{\"date\":\"2026-09-17\"}"}
+  ]
+}
+

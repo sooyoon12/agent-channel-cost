@@ -1,0 +1,9 @@
+target_ratio: 0.4
+max_agent_turns: 6
+max_identical_tool_calls: 2
+max_request_input_tokens: 240000
+residual_tolerance:
+  # 스모크런 전에 명세에 추가로 고정해야 한다.
+  absolute_tokens: null
+  fraction_of_provider_input: null
+shadow_cost_tolerance_usd: 1.0e-9

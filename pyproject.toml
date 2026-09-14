@@ -1,0 +1,24 @@
+[build-system]
+requires = ["setuptools>=69"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "agent-channel-cost"
+version = "0.1.0"
+description = "I/T/O channel accounting for tool-using agent trajectories"
+requires-python = ">=3.11"
+dependencies = []
+
+[project.optional-dependencies]
+tokenizer = ["tiktoken>=0.9"]
+config = ["PyYAML>=6.0"]
+dev = ["pytest>=8.0"]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["src*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+
