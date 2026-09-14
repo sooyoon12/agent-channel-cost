@@ -15,8 +15,10 @@ class ConfigTests(unittest.TestCase):
         pricing = load_mapping_yaml(ROOT / "configs" / "pricing.yaml")
         self.assertEqual(experiment["target_ratio"], 0.4)
         self.assertEqual(experiment["max_agent_turns"], 6)
-        self.assertIsNone(model["model_id"])
-        self.assertIsNone(pricing["standard"]["output_per_unit"])
+        self.assertEqual(model["model_id"], "gpt-5.6-terra")
+        self.assertEqual(model["tokenizer"]["exact_encoding"], "o200k_base")
+        self.assertEqual(pricing["standard"]["cache_write_input_per_unit"], 2.5)
+        self.assertEqual(pricing["standard"]["output_per_unit"], 12.0)
 
     def test_duplicate_keys_and_lists_are_rejected(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -32,4 +34,3 @@ class ConfigTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-

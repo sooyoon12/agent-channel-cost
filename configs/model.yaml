@@ -1,12 +1,11 @@
 provider: openai
 base_url: https://api.openai.com/v1
 api_key_env: OPENAI_API_KEY
-# 공식 provider 문서와 실제 계정의 모델 목록에서 확인한 뒤 고정한다.
-model_id: null
+model_id: gpt-5.6-terra
 requested_model_label: gpt-5.6-terra
 temperature: 0
 reasoning_effort: low
 tokenizer:
-  exact_encoding: null
-  # exact mapping 미지원 시 공식 count 기능 확인 후 명시적으로 선택한다.
+  exact_encoding: o200k_base
+  version: 0.14.0
   proxy_encoding: null

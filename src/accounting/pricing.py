@@ -17,6 +17,7 @@ class PriceTier:
     cached_input_per_million: Decimal
     output_per_million: Decimal
     reasoning_output_per_million: Decimal | None = None
+    cache_write_input_per_million: Decimal | None = None
 
     def __post_init__(self) -> None:
         for value in (
@@ -27,6 +28,8 @@ class PriceTier:
             if value < 0:
                 raise ValueError("prices cannot be negative")
         if self.reasoning_output_per_million is not None and self.reasoning_output_per_million < 0:
+            raise ValueError("prices cannot be negative")
+        if self.cache_write_input_per_million is not None and self.cache_write_input_per_million < 0:
             raise ValueError("prices cannot be negative")
 
 
@@ -51,12 +54,19 @@ class PricingSchedule:
 class CostBreakdown:
     uncached_input: Decimal
     cached_input: Decimal
+    cache_write_input: Decimal
     visible_output: Decimal
     reasoning_output: Decimal
 
     @property
     def total(self) -> Decimal:
-        return self.uncached_input + self.cached_input + self.visible_output + self.reasoning_output
+        return (
+            self.uncached_input
+            + self.cached_input
+            + self.cache_write_input
+            + self.visible_output
+            + self.reasoning_output
+        )
 
 
 @dataclass(frozen=True)
@@ -74,6 +84,17 @@ def calculate_model_cost(usage: ProviderUsage, schedule: PricingSchedule) -> Dua
     cached = usage.cached_input_tokens
     if cached is None:
         raise ValueError("billed cost requires provider cached_input_tokens; missing is not zero")
+    cache_write = usage.cache_write_input_tokens
+    if cache_write is None:
+        if tier.cache_write_input_per_million is not None:
+            raise ValueError(
+                "billed cost requires provider cache_write_input_tokens when cache writes are priced"
+            )
+        cache_write = 0
+    elif cache_write and tier.cache_write_input_per_million is None:
+        raise ValueError("cache-write tokens cannot be priced without a cache-write rate")
+    if cached + cache_write > usage.input_tokens:
+        raise ValueError("cached-read plus cache-write input tokens exceed total input tokens")
     reasoning = usage.reasoning_output_tokens
     if reasoning is None:
         if tier.reasoning_output_per_million is not None:
@@ -83,18 +104,25 @@ def calculate_model_cost(usage: ProviderUsage, schedule: PricingSchedule) -> Dua
         # Total output remains billable even when its reasoning sub-count is not
         # exposed. The token log still preserves reasoning as null.
         reasoning = 0
+    if reasoning > usage.output_tokens:
+        raise ValueError("reasoning output tokens exceed total output tokens")
     visible_output = usage.output_tokens - reasoning
     reasoning_rate = tier.reasoning_output_per_million or tier.output_per_million
+    cache_write_rate = tier.cache_write_input_per_million or Decimal(0)
 
     billed = CostBreakdown(
-        uncached_input=_cost(usage.input_tokens - cached, tier.uncached_input_per_million),
+        uncached_input=_cost(
+            usage.input_tokens - cached - cache_write, tier.uncached_input_per_million
+        ),
         cached_input=_cost(cached, tier.cached_input_per_million),
+        cache_write_input=_cost(cache_write, cache_write_rate),
         visible_output=_cost(visible_output, tier.output_per_million),
         reasoning_output=_cost(reasoning, reasoning_rate),
     )
     list_price = CostBreakdown(
         uncached_input=_cost(usage.input_tokens, tier.uncached_input_per_million),
         cached_input=Decimal(0),
+        cache_write_input=Decimal(0),
         visible_output=_cost(visible_output, tier.output_per_million),
         reasoning_output=_cost(reasoning, reasoning_rate),
     )

@@ -101,6 +101,27 @@ class RuntimeTests(unittest.TestCase):
         )
         self.assertTrue(result.record["success"])
 
+    def test_tool_call_on_last_allowed_turn_is_max_turn_failure(self):
+        task = generate_task_set()[0]
+        tokenizer = UnitCounter()
+        calls = tuple(task.expected_tool_calls) * 3
+        runtime = AgentRuntime(
+            provider=ScriptedProvider(calls, tokenizer),
+            tokenizer=tokenizer,
+            pricing=PricingSchedule(PriceTier(Decimal("2"), Decimal("0.5"), Decimal("8"))),
+            compressor=FixedRatioCompressor(),
+            settings=RuntimeSettings(
+                model="offline-fixed-model", max_turns=2, max_identical_calls=10
+            ),
+            tokenizer_name="unit-counter",
+            tokenizer_version="1",
+        )
+        result = runtime.run(
+            task, language="ko", condition=ExperimentCondition.BASELINE, repetition=1
+        )
+        self.assertFalse(result.record["success"])
+        self.assertEqual(result.record["failure_type"], "max_turn/budget")
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -31,12 +31,34 @@ from src.tasks.generator import generate_task_set
 
 def price_tier(value):
     reasoning = value.get("reasoning_output_per_unit")
+    cache_write = value.get("cache_write_input_per_unit")
     return PriceTier(
         Decimal(str(value["uncached_input_per_unit"])),
         Decimal(str(value["cached_input_per_unit"])),
         Decimal(str(value["output_per_unit"])),
         Decimal(str(reasoning)) if reasoning is not None else None,
+        Decimal(str(cache_write)) if cache_write is not None else None,
     )
+
+
+def resolve_frozen_tokenizer(model):
+    tokenizer_config = model["tokenizer"]
+    tokenizer = resolve_tiktoken(
+        model["model_id"], proxy_encoding=tokenizer_config.get("proxy_encoding")
+    )
+    recorded_encoding = tokenizer_config.get("exact_encoding") or tokenizer_config.get(
+        "proxy_encoding"
+    )
+    if tokenizer.name != recorded_encoding:
+        raise RuntimeError(
+            f"resolved tokenizer {tokenizer.name!r} differs from frozen {recorded_encoding!r}"
+        )
+    if tokenizer.version != tokenizer_config["version"]:
+        raise RuntimeError(
+            f"installed tiktoken {tokenizer.version!r} differs from frozen "
+            f"{tokenizer_config['version']!r}"
+        )
+    return tokenizer
 
 
 def main() -> None:
@@ -54,29 +76,36 @@ def main() -> None:
     report = validate_live_configuration(
         model=model, pricing=pricing_config, experiment=experiment, compression=compression
     )
+    tokenizer = None
+    tokenizer_issue = None
+    if report.ready:
+        try:
+            tokenizer = resolve_frozen_tokenizer(model)
+        except Exception as exc:
+            tokenizer_issue = str(exc)
     if args.mode == "preflight":
-        if report.ready:
+        if report.ready and tokenizer_issue is None:
             print("live preflight ready")
         else:
             print("live preflight blocked")
             for issue in report.issues:
                 print("-", issue)
+            if tokenizer_issue is not None:
+                print("-", tokenizer_issue)
         return
     require_live_ready(
         model=model, pricing=pricing_config, experiment=experiment, compression=compression
     )
     if args.output is None or args.projected_cost_per_run is None:
         raise SystemExit("paid modes require --output and --projected-cost-per-run")
+    if tokenizer_issue is not None or tokenizer is None:
+        raise SystemExit(f"tokenizer preflight failed: {tokenizer_issue}")
     if args.output.exists() and not args.resume:
         raise SystemExit(f"output exists; pass --resume after verifying it: {args.output}")
     api_key = os.environ.get(model["api_key_env"])
     if not api_key:
         raise SystemExit(f"missing API key environment variable: {model['api_key_env']}")
     verify_frozen_dataset("data")
-    tokenizer_config = model["tokenizer"]
-    tokenizer = resolve_tiktoken(
-        model["model_id"], proxy_encoding=tokenizer_config.get("proxy_encoding")
-    )
     standard = price_tier(pricing_config["standard"])
     long_context = (
         price_tier(pricing_config["long_context"])

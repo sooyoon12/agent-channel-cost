@@ -1,15 +1,17 @@
 # agent-channel-cost
 
-KSC 2026 연구 명세의 I/T/O 채널 회계 구현이다. 현재 범위는 외부 모델을
-호출하지 않는 회계 코어와 fixture 기반 검증으로 제한한다.
+KSC 2026 연구 명세의 I/T/O 채널 회계와 실험 실행·분석 파이프라인이다.
+실제 API 호출 전 단계는 오프라인 fixture와 scripted provider로 검증한다.
 
 ```bash
-python -m unittest discover -s tests -v
+python3 -m venv .venv
+.venv/bin/python -m pip install -e '.[live,dev]'
+.venv/bin/python -m pytest
 ```
 
-실제 실행 전에는 `configs/model.yaml`과 `configs/pricing.yaml`의 `null` 값을
-공식 provider 문서에 근거해 채워야 한다. 미확정 값은 의도적으로 실행 가능
-기본값을 제공하지 않는다.
+`configs/model.yaml`은 `gpt-5.6-terra`, `o200k_base`, `tiktoken==0.14.0`을
+고정한다. `configs/pricing.yaml`은 2026-09-14에 확인한 공식 Standard·장문
+요율을 고정하며, cached read와 cache write를 별도 과금 항목으로 계산한다.
 
 현재 태스크 생성기는 공통 의미 구조에서 한국어·영어 surface를 함께 만들며,
 `generate_preview()`는 데이터 동결 전 검토용으로 유형별 3쌍만 반환한다.
@@ -24,17 +26,21 @@ python -m unittest discover -s tests -v
 - provider 장애 재시도는 연구 행동 재시도와 분리되며 기본 최대 1회다.
 - `scripts/analyze_results.py`가 processed JSON/CSV와 필수 SVG 두 개를 만든다.
 
-아직 공식 확인이 필요한 값은 model ID, 가격표와 버전, tokenizer encoding,
-protocol residual 허용치, realized-ratio 허용 오차다. 이 값이 비어 있으면 live
-preflight가 실패하는 것이 정상이다.
+모델 ID, 가격, tokenizer, protocol residual 허용치, realized-ratio 허용 오차는
+모두 고정되어 있다. 계정의 모델 접근 권한과 실제 응답 schema는 크레딧을 받은
+뒤 첫 smoke 호출에서만 최종 확인할 수 있다.
 
 ```bash
-python3 scripts/verify_dataset.py
-python3 scripts/run_experiment.py preflight
-python3 scripts/check_smoke.py results/smoke/RUN.jsonl
-python3 scripts/analyze_results.py results/raw/runs.jsonl
+.venv/bin/python scripts/verify_dataset.py
+.venv/bin/python scripts/run_experiment.py preflight
+.venv/bin/python scripts/check_smoke.py results/smoke/RUN.jsonl
+.venv/bin/python scripts/analyze_results.py results/raw/runs.jsonl
 ```
 
 유료 실행은 `run_experiment.py smoke|main --output ...
 --projected-cost-per-run ...`처럼 명시해야 한다. 중단된 실행은 같은 명령에
 `--resume`을 붙이면 기존 ordinal과 계획의 일치를 확인한 뒤 이어서 실행한다.
+
+가격 출처: <https://developers.openai.com/api/docs/pricing>
+
+모델 출처: <https://developers.openai.com/api/docs/models/gpt-5.6-terra>

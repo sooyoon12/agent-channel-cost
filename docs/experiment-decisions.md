@@ -19,15 +19,29 @@ This file records operational choices made before any model result is observed.
 - A non-negative protocol residual is accepted up to
   `max(256 tokens, 2% of provider input)`.
 - The realized compression ratio must be within absolute error 0.05 of 0.4.
+- Provider input usage is split into uncached, cache-read, and cache-write
+  tokens. A missing cache-write sub-count is never coerced to zero when the
+  selected price schedule charges cache writes.
 
-## Values that must be frozen before the first smoke call
+## External values frozen on 2026-09-14 before the first smoke call
 
-- Exact provider model ID or snapshot.
-- Official price values, price version, and source URL.
-- Exact tokenizer encoding, or the explicitly justified proxy encoding.
-- Installed provider SDK and tokenizer package versions.
+- Provider model ID: `gpt-5.6-terra`. The official model page listed the alias
+  but no dated snapshot, so the alias is recorded explicitly.
+- Standard price per 1M tokens: uncached input USD 2.00, cached input USD 0.20,
+  cache write USD 2.50, output USD 12.00.
+- Long-context price per 1M tokens: uncached input USD 4.00, cached input
+  USD 0.40, cache write USD 5.00, output USD 18.00. The full request moves to
+  this tier when input exceeds 272K tokens.
+- Official sources:
+  `https://developers.openai.com/api/docs/models/gpt-5.6-terra` and
+  `https://developers.openai.com/api/docs/pricing`.
+- Exact public tokenizer mapping: `gpt-5.6-terra -> o200k_base`, verified with
+  `tiktoken==0.14.0`; no proxy is used.
+- No provider SDK is used. The adapter uses Python's standard-library HTTP
+  client and an injectable transport, so there is no SDK version to freeze.
 
-The live preflight intentionally fails while any of these values is missing.
+The live preflight fails closed if any frozen value or tokenizer version is
+missing or differs from the installed environment.
 
 ## Offline validation only
 

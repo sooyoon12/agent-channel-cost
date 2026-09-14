@@ -33,6 +33,8 @@ def write_analysis_outputs(
             "mean_turn_count",
             "mean_tool_call_count",
             "mean_realized_ratio",
+            "mean_provider_cached_input_tokens",
+            "mean_provider_cache_write_input_tokens",
             "mean_reasoning_output_tokens",
             "aggregate_cdr",
         ]

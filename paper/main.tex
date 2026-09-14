@@ -28,6 +28,9 @@
 각 요청의 콘텐츠 입력을 I와 T로 분류하고 현재 모델 생성을 O로 분류한다.
 provider 직렬화 차이는 어느 채널에도 임의 배분하지 않고 residual로 둔다.
 압축 조건은 B0, I-H, T-H, O이며 목표 유지율은 0.4이다.
+실제 과금 비용은 입력을 비캐시, 캐시 읽기, 캐시 쓰기로 분리해 계산하고,
+list-price 비용은 모든 입력을 비캐시 정가로 표준화한다. 272K 입력 초과 요청은
+요청 전체에 장문 요율을 적용하되 주 분석 요청은 240K 미만으로 제한한다.
 
 \begin{align}
 G_i &= C_{\mathrm{shadow},i} - C_{\mathrm{compressed},i},\\
@@ -65,4 +68,3 @@ O & -- & -- & -- & -- \\
 \bibliographystyle{plain}
 \bibliography{references}
 \end{document}
-

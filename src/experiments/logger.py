@@ -45,6 +45,7 @@ REQUIRED_TOKEN_FIELDS = frozenset(
         "protocol_residual_input",
         "provider_input",
         "provider_cached_input",
+        "provider_cache_write_input",
         "assistant_natural_output",
         "assistant_tool_call_output",
         "provider_reasoning_output",
@@ -82,4 +83,3 @@ class JsonlRunLogger:
             stream.write(line)
             stream.flush()
             os.fsync(stream.fileno())
-

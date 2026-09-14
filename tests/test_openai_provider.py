@@ -24,7 +24,7 @@ class FakeTransport:
             ],
             "usage": {
                 "input_tokens": 100,
-                "input_tokens_details": {"cached_tokens": 20},
+                "input_tokens_details": {"cached_tokens": 20, "cache_write_tokens": 5},
                 "output_tokens": 10,
                 "output_tokens_details": {"reasoning_tokens": 3},
                 "total_tokens": 110,
@@ -67,9 +67,9 @@ class OpenAIProviderTests(unittest.TestCase):
         self.assertEqual(transport.path, "responses")
         self.assertEqual(response.response_id, "resp-test")
         self.assertEqual(response.usage.cached_input_tokens, 20)
+        self.assertEqual(response.usage.cache_write_input_tokens, 5)
         self.assertEqual(response.usage.reasoning_output_tokens, 3)
 
 
 if __name__ == "__main__":
     unittest.main()
-

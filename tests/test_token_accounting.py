@@ -9,12 +9,13 @@ class TokenAccountingTests(unittest.TestCase):
         usage = parse_provider_usage(
             {
                 "input_tokens": 105,
-                "input_tokens_details": {"cached_tokens": 20},
+                "input_tokens_details": {"cached_tokens": 20, "cache_write_tokens": 5},
                 "output_tokens": 11,
                 "total_tokens": 116,
             }
         )
-        self.assertEqual(usage.uncached_input_tokens, 85)
+        self.assertEqual(usage.uncached_input_tokens, 80)
+        self.assertEqual(usage.cache_write_input_tokens, 5)
         self.assertIsNone(usage.reasoning_output_tokens)
 
     def test_chat_usage_is_supported(self):
@@ -42,9 +43,22 @@ class TokenAccountingTests(unittest.TestCase):
     def test_missing_is_not_zero(self):
         usage = parse_provider_usage({"input_tokens": 10, "output_tokens": 2})
         self.assertIsNone(usage.cached_input_tokens)
+        self.assertIsNone(usage.cache_write_input_tokens)
         self.assertIsNone(usage.reasoning_output_tokens)
+
+    def test_cache_read_and_write_cannot_exceed_total_input(self):
+        with self.assertRaises(ValueError):
+            parse_provider_usage(
+                {
+                    "input_tokens": 10,
+                    "input_tokens_details": {
+                        "cached_tokens": 7,
+                        "cache_write_tokens": 4,
+                    },
+                    "output_tokens": 1,
+                }
+            )
 
 
 if __name__ == "__main__":
     unittest.main()
-

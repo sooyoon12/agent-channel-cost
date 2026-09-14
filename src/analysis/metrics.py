@@ -235,6 +235,12 @@ def summarize_conditions(records: Iterable[Mapping[str, Any]]) -> dict[str, dict
             "mean_local_i_input_tokens": _mean_nested(values, "tokens", "local_i_input"),
             "mean_local_t_input_tokens": _mean_nested(values, "tokens", "local_t_input"),
             "mean_provider_input_tokens": _mean_nested(values, "tokens", "provider_input"),
+            "mean_provider_cached_input_tokens": _mean_nested(
+                values, "tokens", "provider_cached_input"
+            ),
+            "mean_provider_cache_write_input_tokens": _mean_nested(
+                values, "tokens", "provider_cache_write_input"
+            ),
             "mean_reasoning_output_tokens": _mean_nested(
                 values, "tokens", "provider_reasoning_output"
             ),

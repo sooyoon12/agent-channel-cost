@@ -86,6 +86,7 @@ class ScriptedProvider:
         usage = ProviderUsage(
             input_tokens=local_input + self._residual,
             cached_input_tokens=0,
+            cache_write_input_tokens=0,
             output_tokens=local_output,
             reasoning_output_tokens=0,
             total_tokens=local_input + self._residual + local_output,

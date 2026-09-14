@@ -3,6 +3,6 @@ __pycache__/
 .pytest_cache/
 .coverage
 .venv/
+*.egg-info/
 results/raw/*.jsonl
 results/smoke/*.jsonl
-

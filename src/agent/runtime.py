@@ -166,13 +166,14 @@ class AgentRuntime:
         shadow_requests: list[ReplayShadowRequest] = []
         compression_results: list[CompressionResult] = []
         total_i = total_t = total_residual = total_provider_input = 0
-        total_cached = total_output = total_reasoning = 0
-        cached_available = reasoning_available = True
+        total_cached = total_cache_write = total_output = total_reasoning = 0
+        cached_available = cache_write_available = reasoning_available = True
         natural_output = tool_call_output = 0
         billed_model = list_model = Decimal(0)
         turn_count = 0
         provider_error = False
         repeat_blocked = False
+        ended_with_final_output = False
         attempted_call_counts: dict[tuple[str, str], int] = {}
 
         while turn_count < self.settings.max_turns:
@@ -247,6 +248,10 @@ class AgentRuntime:
                 cached_available = False
             else:
                 total_cached += response.usage.cached_input_tokens
+            if response.usage.cache_write_input_tokens is None:
+                cache_write_available = False
+            else:
+                total_cache_write += response.usage.cache_write_input_tokens
             total_output += response.usage.output_tokens
             if response.usage.reasoning_output_tokens is None:
                 reasoning_available = False
@@ -270,6 +275,7 @@ class AgentRuntime:
                         "local_tokens": output_tokens,
                         "provider_input_tokens": response.usage.input_tokens,
                         "provider_cached_input_tokens": response.usage.cached_input_tokens,
+                        "provider_cache_write_input_tokens": response.usage.cache_write_input_tokens,
                         "provider_output_tokens": response.usage.output_tokens,
                         "provider_reasoning_tokens": response.usage.reasoning_output_tokens,
                         "latency_ms": response.latency_ms,
@@ -278,6 +284,7 @@ class AgentRuntime:
                 )
                 history.append(deepcopy(output_item))
             if not current_tool_calls:
+                ended_with_final_output = True
                 break
             for call in current_tool_calls:
                 raw_arguments = call["arguments"]
@@ -344,6 +351,16 @@ class AgentRuntime:
                 "repeated_call",
                 "an identical tool call beyond the configured limit was blocked before execution",
             )
+        elif (
+            not provider_error
+            and turn_count >= self.settings.max_turns
+            and not ended_with_final_output
+        ):
+            evaluation = EvaluationResult(
+                False,
+                "max_turn/budget",
+                "the model requested another tool call on the final allowed turn",
+            )
         shadow = validate_retokenized_shadow_paths(
             shadow_requests,
             self.pricing,
@@ -389,6 +406,9 @@ class AgentRuntime:
                 "protocol_residual_input": total_residual,
                 "provider_input": total_provider_input,
                 "provider_cached_input": total_cached if cached_available else None,
+                "provider_cache_write_input": (
+                    total_cache_write if cache_write_available else None
+                ),
                 "assistant_natural_output": natural_output,
                 "assistant_tool_call_output": tool_call_output,
                 "provider_reasoning_output": total_reasoning if reasoning_available else None,
