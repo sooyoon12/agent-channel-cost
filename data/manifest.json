@@ -1,0 +1,12 @@
+{
+  "dataset_version": "ksc2026-v1",
+  "files": {
+    "generated_tasks_en.jsonl": "25703e6deaa7eb2064a6b6e22e18c3627318db91789880a697f4dac03883e435",
+    "generated_tasks_ko.jsonl": "ad862e472c98aa9147eb682e166e3314622f7a86a4809803a8c187d1a8fdbbd1",
+    "semantic_tasks.jsonl": "8d3e51aa6cac5fcf6d890ddd4c6e2ff4108c915dfec259f0df3bfec456927f27"
+  },
+  "generator_version": 1,
+  "semantic_pair_count": 40,
+  "semantic_set_checksum": "e3c54514d80096daa6a37f24a8fccce7f98f692eef9c12a3b15466f24d0bde75",
+  "task_instance_count": 80
+}

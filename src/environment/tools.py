@@ -6,6 +6,7 @@ from copy import deepcopy
 from dataclasses import dataclass
 import hashlib
 import json
+import time
 from typing import Any, Callable, Mapping
 
 
@@ -27,6 +28,7 @@ class ToolExecution:
     argument_hash: str
     result: JsonObject
     error_code: str | None
+    latency_ms: float
 
 
 def _object_schema(properties: Mapping[str, Any], required: list[str]) -> JsonObject:
@@ -196,20 +198,26 @@ class DeterministicToolEnvironment:
         return deepcopy(self._state)
 
     def execute(self, name: str, arguments: Any) -> ToolExecution:
+        started = time.perf_counter_ns()
         argument_object = deepcopy(dict(arguments)) if isinstance(arguments, Mapping) else {}
         if name not in TOOL_SPECS:
             result = _error("unknown_tool", f"unknown tool: {name}")
-            return self._record(name, argument_object, result, "unknown_tool")
+            return self._record(name, argument_object, result, "unknown_tool", started)
         validation_errors = validate_arguments(arguments, TOOL_SPECS[name].parameters)
         if validation_errors:
             result = _error("schema_error", "tool arguments failed schema validation", details=validation_errors)
-            return self._record(name, argument_object, result, "schema_error")
+            return self._record(name, argument_object, result, "schema_error", started)
         result = self._handlers[name](arguments)
         error = result.get("error", {}).get("code") if not result.get("ok", False) else None
-        return self._record(name, argument_object, result, error)
+        return self._record(name, argument_object, result, error, started)
 
     def _record(
-        self, name: str, arguments: JsonObject, result: JsonObject, error_code: str | None
+        self,
+        name: str,
+        arguments: JsonObject,
+        result: JsonObject,
+        error_code: str | None,
+        started_ns: int,
     ) -> ToolExecution:
         execution = ToolExecution(
             sequence=len(self._executions) + 1,
@@ -218,6 +226,7 @@ class DeterministicToolEnvironment:
             argument_hash=_stable_hash(arguments),
             result=deepcopy(result),
             error_code=error_code,
+            latency_ms=(time.perf_counter_ns() - started_ns) / 1_000_000,
         )
         self._executions.append(execution)
         return execution

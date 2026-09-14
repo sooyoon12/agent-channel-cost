@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import asdict, dataclass
+from datetime import date, timedelta
 import hashlib
 import json
 import random
@@ -48,25 +49,26 @@ STATUSES = ("REVIEW", "HOLD", "APPROVED")
 
 def _event_state(index: int) -> dict[str, Any]:
     base = 100 + index
+    anchor = date(2026, 10, 1) + timedelta(days=index)
     return {
         "events": [
             {
                 "event_id": f"EV-{base}-A",
-                "date": "2026-10-02",
+                "date": anchor.isoformat(),
                 "attendees": ["P01", "P03"],
                 "declined": ["P02"],
                 "cancelled": False,
             },
             {
                 "event_id": f"EV-{base}-B",
-                "date": "2026-10-04",
+                "date": (anchor + timedelta(days=2)).isoformat(),
                 "attendees": ["P01", "P02", "P03", "P04"],
                 "declined": [],
                 "cancelled": False,
             },
             {
                 "event_id": f"EV-{base}-C",
-                "date": "2026-10-05",
+                "date": (anchor + timedelta(days=3)).isoformat(),
                 "attendees": ["P06"],
                 "declined": ["P01"],
                 "cancelled": True,
@@ -90,11 +92,15 @@ def _generate_precise(index: int, sensitive: bool) -> SemanticTask:
             "person_en": person["en"],
             "attendance": "not_attending" if sensitive else "attending",
             "date_operator": "on_or_after" if sensitive else "after",
-            "reference_date": "2026-10-03",
+            "reference_date": (
+                state["events"][2]["date"]
+                if sensitive
+                else (date.fromisoformat(state["events"][1]["date"]) - timedelta(days=1)).isoformat()
+            ),
             "attendee_operator": "at_most" if sensitive else "at_least",
-            "attendee_count": 1 if sensitive else 4,
+            "attendee_count": 1 if sensitive else rng.randint(2, 4),
             "include_cancelled": sensitive,
-            "sort": "descending" if sensitive else "ascending",
+            "sort": "descending" if sensitive else rng.choice(("ascending", "descending")),
         }
         name = "search_events"
         arguments = {

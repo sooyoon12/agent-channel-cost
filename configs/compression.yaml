@@ -1,0 +1,7 @@
+algorithm: uniform_extract
+algorithm_version: 1
+target_ratio: 0.4
+local_compressor: true
+compressor_billed_cost_usd: 0
+compressor_list_price_cost_usd: 0
+

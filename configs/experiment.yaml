@@ -3,7 +3,13 @@ max_agent_turns: 6
 max_identical_tool_calls: 2
 max_request_input_tokens: 240000
 residual_tolerance:
-  # 스모크런 전에 명세에 추가로 고정해야 한다.
-  absolute_tokens: null
-  fraction_of_provider_input: null
+  absolute_tokens: 256
+  fraction_of_provider_input: 0.02
 shadow_cost_tolerance_usd: 1.0e-9
+# "0.4에 근접"의 수치 정의. 본 스모크런 전에 승인·동결한다.
+realized_ratio_absolute_tolerance: 0.05
+baseline_success_aggregation: majority_vote
+bootstrap_resampling_unit: pair_id
+bootstrap_replicates: 10000
+execution_order_seed: 20260914
+provider_error_retries: 1

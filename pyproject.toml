@@ -11,8 +11,8 @@ dependencies = []
 
 [project.optional-dependencies]
 tokenizer = ["tiktoken>=0.9"]
-config = ["PyYAML>=6.0"]
 dev = ["pytest>=8.0"]
+live = ["tiktoken>=0.9"]
 
 [tool.setuptools.packages.find]
 where = ["."]
@@ -21,4 +21,3 @@ include = ["src*"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-q"
-

@@ -1,0 +1,68 @@
+\documentclass[10pt,twocolumn]{article}
+\usepackage[a4paper,margin=18mm]{geometry}
+\usepackage{kotex}
+\usepackage{amsmath}
+\usepackage{booktabs}
+\usepackage{graphicx}
+\usepackage{hyperref}
+
+\title{한국어 도구 사용 에이전트의 채널별 압축 비용 전이 측정}
+\author{Anonymous for review}
+\date{}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+본 연구는 다중 턴 도구 사용 에이전트에서 입력 압축의 명목상 토큰 절감이
+추가 호출, 재시도, reasoning 및 출력 비용으로 얼마나 전이되는지를 측정한다.
+입력을 지시·이력(I)과 도구 관측(T), 현재 생성을 출력(O)로 분리하고 한국어와
+동일 의미 구조의 영어 태스크를 통제 비교한다.
+\end{abstract}
+
+\section{서론}
+입력 토큰만 비교하는 기존 압축 평가는 도구 사용 trajectory에서 발생하는
+행동 비용을 놓칠 수 있다. 본 연구의 질문과 기여를 여기에 기술한다.
+
+\section{방법}
+각 요청의 콘텐츠 입력을 I와 T로 분류하고 현재 모델 생성을 O로 분류한다.
+provider 직렬화 차이는 어느 채널에도 임의 배분하지 않고 residual로 둔다.
+압축 조건은 B0, I-H, T-H, O이며 목표 유지율은 0.4이다.
+
+\begin{align}
+G_i &= C_{\mathrm{shadow},i} - C_{\mathrm{compressed},i},\\
+B_i &= C_{\mathrm{shadow},i} - C_{\mathrm{baseline},i} + K_i,\\
+\widehat{\mathrm{CDR}} &= \frac{\sum_i B_i}{\sum_i G_i}.
+\end{align}
+
+한국어·영어 surface는 40개 공통 의미 구조에서 생성하며 각 의미쌍을
+bootstrap 재표집 단위로 사용한다. B0는 인스턴스별 3회 반복한다.
+
+\section{결과}
+% 실제 실행 후 results/processed/condition_summary.csv의 값을 옮긴다.
+\begin{table}[t]
+\centering
+\caption{조건별 성능 및 비용 요약(실험 후 채움)}
+\begin{tabular}{lrrrr}
+\toprule
+조건 & 성공률 & List 비용 & 턴 & CDR \\
+\midrule
+B0 & -- & -- & -- & -- \\
+I-H & -- & -- & -- & -- \\
+T-H & -- & -- & -- & -- \\
+O & -- & -- & -- & -- \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% 생성 SVG: results/figures/figure1_channel_saving.svg,
+% results/figures/figure2_cdr_components.svg. 제출본에서는 PDF로 변환한다.
+
+\section{논의 및 한계}
+합성 태스크, 단일 모델, 비공개 tokenizer/직렬화 residual, 자동 caching,
+언어별 surface 자연스러움과 실행 비결정성의 영향을 논의한다.
+
+\bibliographystyle{plain}
+\bibliography{references}
+\end{document}
+
