@@ -15,10 +15,19 @@ def write_analysis_outputs(
     output_dir: str | Path,
     *,
     bootstrap_replicates: int = 10_000,
+    uncached_input_price_per_million: float = 2.0,
+    output_price_per_million: float = 12.0,
+    reasoning_price_per_million: float | None = None,
 ) -> dict[str, Any]:
     directory = Path(output_dir)
     directory.mkdir(parents=True, exist_ok=True)
-    analysis = serializable_analysis(records, bootstrap_replicates=bootstrap_replicates)
+    analysis = serializable_analysis(
+        records,
+        bootstrap_replicates=bootstrap_replicates,
+        uncached_input_price_per_million=uncached_input_price_per_million,
+        output_price_per_million=output_price_per_million,
+        reasoning_price_per_million=reasoning_price_per_million,
+    )
     (directory / "summary.json").write_text(
         json.dumps(analysis, ensure_ascii=False, sort_keys=True, indent=2) + "\n",
         encoding="utf-8",

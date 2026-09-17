@@ -16,6 +16,9 @@ from src.accounting.shadow import (
 class WordCounter:
     """Deterministic test tokenizer; production uses the recorded adapter."""
 
+    def count_text(self, text):
+        return len(str(text).split())
+
     def count_json(self, value):
         if isinstance(value, dict):
             return sum(self.count_json(v) for v in value.values())

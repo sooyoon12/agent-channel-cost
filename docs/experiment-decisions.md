@@ -18,6 +18,12 @@ This file records operational choices made before any model result is observed.
 - The frozen dataset is identified by `data/manifest.json`.
 - A non-negative protocol residual is accepted up to
   `max(256 tokens, 2% of provider input)`.
+- Local I/T content counting tokenizes semantic field names and values but
+  excludes JSON punctuation and transport-only `type`, `role`, `id`, `call_id`,
+  `status`, and opaque `encrypted_content` wrappers. Provider-private framing
+  remains in protocol residual. Tool-result payloads are the exception: the
+  adapter transmits them as canonical JSON strings, so T counts that exact
+  serialized string, including its JSON keys and punctuation.
 - The realized compression ratio must be within absolute error 0.05 of 0.4.
 - Provider input usage is split into uncached, cache-read, and cache-write
   tokens. A missing cache-write sub-count is never coerced to zero when the
@@ -39,6 +45,54 @@ This file records operational choices made before any model result is observed.
   `tiktoken==0.14.0`; no proxy is used.
 - No provider SDK is used. The adapter uses Python's standard-library HTTP
   client and an injectable transport, so there is no SDK version to freeze.
+- `temperature` is omitted and the Terra model default is used. On 2026-09-17,
+  before any successful smoke response was produced, the live API returned
+  HTTP 400 stating that `temperature` is unsupported for `gpt-5.6-terra`.
+  The two failed transport attempts are retained separately as preflight
+  diagnostics and excluded from all research analyses.
+- The first successful-response diagnostic on 2026-09-17 reported 335 provider
+  input tokens while the implementation counted 526 local tokens. Before any
+  valid smoke run, local content accounting was corrected to exclude JSON and
+  transport wrappers, as required by the frozen local-content/provider-usage
+  separation. The corrected first-request local count is 320, leaving a
+  non-negative 15-token protocol residual. No response content or task outcome
+  was inspected to make this correction.
+- A subsequent invalid second-turn diagnostic showed that provider-encrypted
+  reasoning state had been counted as 1,230 local I tokens even though it is an
+  opaque transport field. `encrypted_content` was therefore excluded before
+  any valid smoke run; only turn number and aggregate token counts were
+  inspected.
+- Eight pilot rows then completed before a long structured tool result exposed
+  the opposite mismatch: T omitted JSON punctuation even though the adapter
+  transmits tool results as JSON strings (residual 556 versus the frozen 256
+  limit). Those rows were archived as an excluded accounting pilot, and T was
+  aligned with the adapter's exact canonical serialization before restarting
+  the smoke plan. The amendment used aggregate token diagnostics only; pilot
+  task outcomes were not used to choose the counting rule.
+- One later pilot attempt exceeded the frozen residual tolerance on turn 4
+  (287 versus 256) and, under the then-current implementation, stopped before a
+  JSONL row was written. Before main execution, invariant failures were changed
+  to append an `accounting_invalid` row with provider cost and aggregate-only
+  diagnostics, mark it `analysis_valid=false`, and continue the plan. The smoke
+  run-count gate now requires exactly 20 valid rows rather than merely at most
+  20. The successful 20-row smoke file contains no such invalid row.
+- During main execution, a standard-library read `TimeoutError` at plan ordinal
+  360 exposed that only `URLError` connection failures were marked retryable.
+  The failed attempt remains in the append-only raw log and is excluded from
+  analysis. Read timeouts are now classified as transient and receive the same
+  single frozen retry before execution resumes.
+- The first resume after that timeout incorrectly treated prior
+  `accounting_invalid` ordinals as unfinished and appended three replay rows
+  before manual interruption. Raw append-only history was preserved. Resume and
+  analysis now treat the first non-provider-error attempt as terminal for each
+  ordinal; only provider errors may advance to a later canonical attempt. Thus
+  the accidental replay rows are deterministically excluded without rewriting
+  raw data.
+- The first post-run analysis dry run revealed that condition summaries and
+  McNemar counts did not apply `analysis_valid` even though CDR inputs did. No
+  inferential result was accepted from that output. The common analysis entry
+  point and the individual summary/McNemar functions now exclude invalid rows,
+  and outputs were regenerated from the unchanged append-only raw log.
 
 The live preflight fails closed if any frozen value or tokenizer version is
 missing or differs from the installed environment.

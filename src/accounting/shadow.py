@@ -6,10 +6,13 @@ from dataclasses import dataclass
 from decimal import Decimal
 from typing import Any, Iterable, Protocol
 
+from .channels import count_input_item_content
 from .pricing import MILLION, PricingSchedule
 
 
 class JsonTokenCounter(Protocol):
+    def count_text(self, text: str) -> int: ...
+
     def count_json(self, value: Any) -> int: ...
 
 
@@ -49,7 +52,7 @@ class ReplayShadowRequest:
 
 
 def _content_tokens(values: Iterable[Any], tokenizer: JsonTokenCounter) -> int:
-    return sum(tokenizer.count_json(value) for value in values)
+    return sum(count_input_item_content(value, tokenizer) for value in values)
 
 
 def _replay_request_cost(
@@ -95,7 +98,9 @@ def shadow_path_b_delta(
         total += _replay_request_cost(compressed_tokens, request, schedule)
         tier = schedule.tier_for(compressed_tokens + request.protocol_residual_tokens)
         for part in request.contents:
-            delta = tokenizer.count_json(part.original) - tokenizer.count_json(part.compressed)
+            delta = count_input_item_content(
+                part.original, tokenizer
+            ) - count_input_item_content(part.compressed, tokenizer)
             total += Decimal(delta) * tier.uncached_input_per_million / MILLION
     return total
 

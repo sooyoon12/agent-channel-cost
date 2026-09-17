@@ -3,7 +3,14 @@ from decimal import Decimal
 import unittest
 
 from src.agent.runtime import ExperimentCondition
-from src.experiments.runner import BudgetGuard, build_main_plan, build_smoke_plan, plan_checksum
+from src.experiments.runner import (
+    BudgetGuard,
+    build_main_plan,
+    build_smoke_plan,
+    canonical_plan_attempts,
+    plan_checksum,
+    provider_error_is_retryable,
+)
 from src.tasks.generator import generate_task_set
 
 
@@ -46,6 +53,24 @@ class RunnerTests(unittest.TestCase):
         stopped = guard.check(Decimal("99"), Decimal("2"))
         self.assertFalse(stopped.allowed)
         self.assertIsNotNone(stopped.reason)
+
+    def test_only_explicitly_retryable_provider_errors_are_retried(self):
+        retryable = {"events": [{"event_type": "provider_error", "retryable": True}]}
+        permanent = {"events": [{"event_type": "provider_error", "retryable": False}]}
+        legacy = {"events": [{"event_type": "provider_error"}]}
+        self.assertTrue(provider_error_is_retryable(retryable))
+        self.assertFalse(provider_error_is_retryable(permanent))
+        self.assertFalse(provider_error_is_retryable(legacy))
+
+    def test_canonical_attempts_retry_only_provider_errors(self):
+        records = [
+            {"plan_ordinal": 1, "failure_type": "provider_error"},
+            {"plan_ordinal": 1, "failure_type": None},
+            {"plan_ordinal": 2, "failure_type": "accounting_invalid"},
+            {"plan_ordinal": 2, "failure_type": None},
+        ]
+        selected = canonical_plan_attempts(records)
+        self.assertEqual(selected, tuple(records[:3]))
 
 
 if __name__ == "__main__":

@@ -10,7 +10,6 @@ from __future__ import annotations
 import argparse
 from decimal import Decimal
 import json
-import os
 from pathlib import Path
 import sys
 
@@ -22,6 +21,7 @@ from src.agent.runtime import AgentRuntime, RuntimeSettings
 from src.compression.fixed_ratio import FixedRatioCompressor
 from src.experiments.logger import JsonlRunLogger
 from src.experiments.config import load_mapping_yaml
+from src.experiments.dotenv import environment_or_dotenv
 from src.experiments.openai_provider import OpenAIResponsesProvider, UrllibJsonTransport
 from src.experiments.preflight import require_live_ready, validate_live_configuration
 from src.experiments.runner import BudgetGuard, build_main_plan, build_smoke_plan, execute_plan
@@ -102,7 +102,7 @@ def main() -> None:
         raise SystemExit(f"tokenizer preflight failed: {tokenizer_issue}")
     if args.output.exists() and not args.resume:
         raise SystemExit(f"output exists; pass --resume after verifying it: {args.output}")
-    api_key = os.environ.get(model["api_key_env"])
+    api_key = environment_or_dotenv(model["api_key_env"])
     if not api_key:
         raise SystemExit(f"missing API key environment variable: {model['api_key_env']}")
     verify_frozen_dataset("data")
@@ -154,7 +154,7 @@ def main() -> None:
             starting_cost += Decimal(str(record["model_cost_usd"]["billed"])) + Decimal(
                 str(record["compressor_cost_usd"]["billed"])
             )
-            if record.get("analysis_valid", True) and record.get("failure_type") != "provider_error":
+            if record.get("failure_type") != "provider_error":
                 completed.add(ordinal)
         plan = tuple(entry for entry in plan if entry.ordinal not in completed)
         print(f"resume verified: {len(completed)} complete, {len(plan)} remaining")

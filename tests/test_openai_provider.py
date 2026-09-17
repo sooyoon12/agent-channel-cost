@@ -1,6 +1,14 @@
+from io import BytesIO
 import unittest
+from urllib.error import HTTPError
+from unittest.mock import patch
 
-from src.experiments.openai_provider import OpenAIResponsesProvider, build_responses_payload
+from src.experiments.openai_provider import (
+    OpenAIResponsesProvider,
+    ProviderTransportError,
+    UrllibJsonTransport,
+    build_responses_payload,
+)
 from src.experiments.provider import ProviderRequest
 
 
@@ -32,7 +40,7 @@ class FakeTransport:
         }
 
 
-def request(style="normal"):
+def request(style="normal", temperature=None):
     return ProviderRequest(
         items=(
             {"role": "user", "content": "hello"},
@@ -45,7 +53,7 @@ def request(style="normal"):
             {"type": "function_call_output", "call_id": "old", "output": {"ok": True}},
         ),
         model="fixed-model",
-        temperature=0,
+        temperature=temperature,
         reasoning_effort="low",
         max_output_tokens=100,
         output_style=style,
@@ -60,6 +68,11 @@ class OpenAIProviderTests(unittest.TestCase):
         self.assertEqual(len(payload["input"]), 2)
         self.assertIsInstance(payload["input"][1]["output"], str)
         self.assertEqual(payload["text"], {"verbosity": "low"})
+        self.assertNotIn("temperature", payload)
+
+    def test_temperature_is_sent_only_when_explicitly_supported(self):
+        payload = build_responses_payload(request(temperature=0))
+        self.assertEqual(payload["temperature"], 0)
 
     def test_adapter_normalizes_usage_without_network(self):
         transport = FakeTransport()
@@ -69,6 +82,32 @@ class OpenAIProviderTests(unittest.TestCase):
         self.assertEqual(response.usage.cached_input_tokens, 20)
         self.assertEqual(response.usage.cache_write_input_tokens, 5)
         self.assertEqual(response.usage.reasoning_output_tokens, 3)
+
+    def test_http_400_is_not_retryable(self):
+        error = HTTPError("https://example.test", 400, "bad request", {}, BytesIO(b"bad"))
+        transport = UrllibJsonTransport("https://example.test", "secret")
+        with patch("src.experiments.openai_provider.urlopen", side_effect=error):
+            with self.assertRaises(ProviderTransportError) as raised:
+                transport.post("responses", {"model": "fixed-model"})
+        self.assertFalse(raised.exception.retryable)
+
+    def test_http_429_is_retryable(self):
+        error = HTTPError("https://example.test", 429, "rate limited", {}, BytesIO(b"wait"))
+        transport = UrllibJsonTransport("https://example.test", "secret")
+        with patch("src.experiments.openai_provider.urlopen", side_effect=error):
+            with self.assertRaises(ProviderTransportError) as raised:
+                transport.post("responses", {"model": "fixed-model"})
+        self.assertTrue(raised.exception.retryable)
+
+    def test_read_timeout_is_retryable(self):
+        transport = UrllibJsonTransport("https://example.test", "secret")
+        with patch(
+            "src.experiments.openai_provider.urlopen",
+            side_effect=TimeoutError("read timed out"),
+        ):
+            with self.assertRaises(ProviderTransportError) as raised:
+                transport.post("responses", {"model": "fixed-model"})
+        self.assertTrue(raised.exception.retryable)
 
 
 if __name__ == "__main__":

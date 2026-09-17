@@ -8,6 +8,7 @@ import json
 import time
 from typing import Any, Mapping, Protocol, Sequence
 
+from src.accounting.channels import count_input_item_content
 from src.accounting.provider_usage import ProviderUsage
 
 
@@ -15,7 +16,7 @@ from src.accounting.provider_usage import ProviderUsage
 class ProviderRequest:
     items: tuple[Mapping[str, Any], ...]
     model: str
-    temperature: float
+    temperature: float | None
     reasoning_effort: str
     max_output_tokens: int
     output_style: str
@@ -36,6 +37,8 @@ class Provider(Protocol):
 
 
 class JsonTokenCounter(Protocol):
+    def count_text(self, text: str) -> int: ...
+
     def count_json(self, value: Any) -> int: ...
 
 
@@ -81,7 +84,9 @@ class ScriptedProvider:
         else:
             output = ({"type": "message", "role": "assistant", "content": "완료했습니다."},)
         self._position += 1
-        local_input = sum(self._tokenizer.count_json(item) for item in request.items)
+        local_input = sum(
+            count_input_item_content(item, self._tokenizer) for item in request.items
+        )
         local_output = sum(self._tokenizer.count_json(item) for item in output)
         usage = ProviderUsage(
             input_tokens=local_input + self._residual,

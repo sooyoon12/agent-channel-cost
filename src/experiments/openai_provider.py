@@ -15,7 +15,9 @@ from .provider import ProviderRequest, ProviderResponse
 
 
 class ProviderTransportError(RuntimeError):
-    pass
+    def __init__(self, message: str, *, retryable: bool) -> None:
+        super().__init__(message)
+        self.retryable = retryable
 
 
 class JsonTransport(Protocol):
@@ -45,9 +47,18 @@ class UrllibJsonTransport:
         except HTTPError as exc:
             # Do not include headers or request data; either could contain secrets.
             response_text = exc.read().decode("utf-8", errors="replace")[:1000]
-            raise ProviderTransportError(f"provider HTTP {exc.code}: {response_text}") from exc
+            retryable = exc.code in {408, 409, 429, 500, 502, 503, 504}
+            raise ProviderTransportError(
+                f"provider HTTP {exc.code}: {response_text}", retryable=retryable
+            ) from exc
         except URLError as exc:
-            raise ProviderTransportError(f"provider connection failed: {exc.reason}") from exc
+            raise ProviderTransportError(
+                f"provider connection failed: {exc.reason}", retryable=True
+            ) from exc
+        except TimeoutError as exc:
+            raise ProviderTransportError(
+                f"provider connection timed out: {exc}", retryable=True
+            ) from exc
 
 
 def _normalize_input_item(item: Mapping[str, Any]) -> dict[str, Any]:
@@ -83,10 +94,11 @@ def build_responses_payload(request: ProviderRequest) -> dict[str, Any]:
         "model": request.model,
         "input": input_items,
         "tools": tools,
-        "temperature": request.temperature,
         "reasoning": {"effort": request.reasoning_effort},
         "max_output_tokens": request.max_output_tokens,
     }
+    if request.temperature is not None:
+        payload["temperature"] = request.temperature
     if request.output_style == "concise":
         payload["text"] = {"verbosity": "low"}
     return payload
@@ -104,14 +116,15 @@ class OpenAIResponsesProvider:
         raw = self.transport.post("responses", payload)
         elapsed = (time.perf_counter_ns() - started) / 1_000_000
         if "usage" not in raw:
-            raise ProviderTransportError("provider response is missing usage")
+            raise ProviderTransportError("provider response is missing usage", retryable=False)
         output = raw.get("output")
         if not isinstance(output, list):
-            raise ProviderTransportError("provider response output is not a list")
+            raise ProviderTransportError(
+                "provider response output is not a list", retryable=False
+            )
         return ProviderResponse(
             response_id=str(raw.get("id", "missing-response-id")),
             output_items=tuple(output),
             usage=parse_provider_usage(raw["usage"]),
             latency_ms=elapsed,
         )
-

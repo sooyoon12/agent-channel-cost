@@ -9,6 +9,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from enum import Enum
+import json
 from typing import Any, Iterable, Mapping, Protocol
 
 
@@ -26,6 +27,8 @@ class ClassifiedContent:
 
 
 class JsonTokenCounter(Protocol):
+    def count_text(self, text: str) -> int: ...
+
     def count_json(self, value: Any) -> int: ...
 
 
@@ -127,6 +130,55 @@ def classify_output_item(item: Mapping[str, Any]) -> ClassifiedContent:
     raise ValueError(f"unrecognized output item shape: role={role!r}, type={item_type!r}")
 
 
+_PROTOCOL_FIELDS = frozenset(
+    {"type", "role", "id", "call_id", "status", "encrypted_content"}
+)
+
+
+def _semantic_tokens(value: Any, tokenizer: JsonTokenCounter) -> int:
+    """Count semantic atoms without charging local channels for JSON framing."""
+
+    if isinstance(value, str):
+        return tokenizer.count_text(value)
+    if isinstance(value, Mapping):
+        return sum(
+            tokenizer.count_text(str(key)) + _semantic_tokens(item, tokenizer)
+            for key, item in value.items()
+        )
+    if isinstance(value, (list, tuple)):
+        return sum(_semantic_tokens(item, tokenizer) for item in value)
+    if value is None:
+        return tokenizer.count_text("null")
+    if value is True:
+        return tokenizer.count_text("true")
+    if value is False:
+        return tokenizer.count_text("false")
+    return tokenizer.count_text(str(value))
+
+
+def count_input_item_content(item: Mapping[str, Any], tokenizer: JsonTokenCounter) -> int:
+    """Count model-visible semantic content while excluding protocol wrappers.
+
+    Provider usage includes private framing. Local I/T accounting deliberately
+    counts only semantic fields, so `type`, `role`, identifiers, JSON punctuation,
+    opaque encrypted reasoning state, and similar transport metadata remain in
+    the protocol residual.
+    """
+
+    item_type = _type(item)
+    role = _role(item)
+    if _looks_like_tool_result(item_type) or role in {"tool", "function"}:
+        payload = item.get("output", item.get("content", ""))
+        if not isinstance(payload, str):
+            payload = json.dumps(
+                payload, ensure_ascii=False, sort_keys=True, separators=(",", ":")
+            )
+        return tokenizer.count_text(payload)
+
+    semantic = {key: value for key, value in item.items() if key not in _PROTOCOL_FIELDS}
+    return _semantic_tokens(semantic, tokenizer)
+
+
 def count_input_channels(
     items: Iterable[Mapping[str, Any]], tokenizer: JsonTokenCounter
 ) -> ChannelTokenCounts:
@@ -137,7 +189,7 @@ def count_input_channels(
     item_count = 0
     for item in items:
         classified = classify_input_item(item)
-        tokens = tokenizer.count_json(item)
+        tokens = count_input_item_content(item, tokenizer)
         if tokens < 0:
             raise ValueError("tokenizer returned a negative count")
         if classified.channel is Channel.INSTRUCTION_HISTORY:

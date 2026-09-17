@@ -15,6 +15,9 @@ FIXTURE = Path(__file__).parents[1] / "data" / "fixtures" / "accounting_trajecto
 
 
 class LengthCounter:
+    def count_text(self, text):
+        return len(text)
+
     def count_json(self, value):
         return len(json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":")))
 
@@ -49,11 +52,34 @@ class ChannelClassificationTests(unittest.TestCase):
     def test_channel_token_totals_are_disjoint(self):
         data = json.loads(FIXTURE.read_text(encoding="utf-8"))
         counts = count_input_channels(data["input_items"], LengthCounter())
-        expected = sum(LengthCounter().count_json(item) for item in data["input_items"])
-        self.assertEqual(counts.total_input_tokens, expected)
         self.assertGreater(counts.i_tokens, 0)
         self.assertGreater(counts.t_tokens, 0)
         self.assertEqual(counts.item_count, len(data["input_items"]))
+
+    def test_protocol_wrappers_are_excluded_from_content_tokens(self):
+        counter = LengthCounter()
+        message = {
+            "type": "message",
+            "role": "user",
+            "id": "hidden",
+            "encrypted_content": "opaque-ciphertext",
+            "content": "abc",
+        }
+        counts = count_input_channels([message], counter)
+        self.assertEqual(counts.i_tokens, len("content") + len("abc"))
+
+    def test_tool_output_matches_the_transmitted_json_string(self):
+        counter = LengthCounter()
+        item = {
+            "type": "function_call_output",
+            "call_id": "ignored",
+            "output": {"alpha": 1, "beta": True},
+        }
+        counts = count_input_channels([item], counter)
+        serialized = json.dumps(
+            item["output"], ensure_ascii=False, sort_keys=True, separators=(",", ":")
+        )
+        self.assertEqual(counts.t_tokens, len(serialized))
 
 
 if __name__ == "__main__":

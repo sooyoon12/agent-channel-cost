@@ -6,10 +6,11 @@ import tempfile
 import unittest
 
 from src.accounting.pricing import PriceTier, PricingSchedule
+from src.accounting.provider_usage import ProviderUsage
 from src.agent.runtime import AgentRuntime, ExperimentCondition, RuntimeSettings
 from src.compression.fixed_ratio import FixedRatioCompressor
 from src.experiments.logger import JsonlRunLogger, validate_run_record
-from src.experiments.provider import ScriptedProvider
+from src.experiments.provider import ProviderResponse, ScriptedProvider
 from src.tasks.generator import generate_task_set
 
 
@@ -121,6 +122,45 @@ class RuntimeTests(unittest.TestCase):
         )
         self.assertFalse(result.record["success"])
         self.assertEqual(result.record["failure_type"], "max_turn/budget")
+
+    def test_accounting_error_is_logged_as_an_invalid_record(self):
+        class ImpossibleUsageProvider:
+            name = "scripted-offline"
+
+            def complete(self, request):
+                return ProviderResponse(
+                    response_id="bad-accounting",
+                    output_items=(
+                        {"type": "message", "role": "assistant", "content": "done"},
+                    ),
+                    usage=ProviderUsage(
+                        input_tokens=0,
+                        cached_input_tokens=0,
+                        cache_write_input_tokens=0,
+                        output_tokens=1,
+                        reasoning_output_tokens=0,
+                        total_tokens=1,
+                    ),
+                    latency_ms=1.0,
+                )
+
+        task = generate_task_set()[0]
+        tokenizer = UnitCounter()
+        runtime = AgentRuntime(
+            provider=ImpossibleUsageProvider(),
+            tokenizer=tokenizer,
+            pricing=PricingSchedule(PriceTier(Decimal("2"), Decimal("0.5"), Decimal("8"))),
+            compressor=FixedRatioCompressor(),
+            settings=RuntimeSettings(model="offline-fixed-model"),
+            tokenizer_name="unit-counter",
+            tokenizer_version="1",
+        )
+        result = runtime.run(
+            task, language="ko", condition=ExperimentCondition.BASELINE, repetition=1
+        )
+        self.assertEqual(result.record["failure_type"], "accounting_invalid")
+        self.assertFalse(result.record["shadow"]["valid"])
+        self.assertEqual(result.record["events"][-1]["event_type"], "accounting_error")
 
 
 if __name__ == "__main__":

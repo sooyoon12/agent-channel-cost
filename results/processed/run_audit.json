@@ -1,0 +1,17 @@
+{
+  "actual_raw_spend_usd": 2.5033472,
+  "analysis_valid_rows": 468,
+  "canonical_attempt_rows": 481,
+  "canonical_spend_usd": 2.4776572,
+  "completed_plan_ordinals": 480,
+  "excluded_terminal_rows": 12,
+  "ignored_replay_rows": 3,
+  "provider_error_attempts": 1,
+  "raw_rows": 484,
+  "research_spend_usd": 2.3480692,
+  "terminal_failure_types": {
+    "accounting_invalid": 12,
+    "argument_error": 40,
+    "premature_stop": 52
+  }
+}

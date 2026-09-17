@@ -9,7 +9,7 @@ def valid_configs():
             "provider": "openai",
             "model_id": "gpt-5.6-terra",
             "requested_model_label": "gpt-5.6-terra",
-            "temperature": 0,
+            "temperature": None,
             "reasoning_effort": "low",
             "tokenizer": {
                 "exact_encoding": "o200k_base",

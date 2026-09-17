@@ -26,7 +26,9 @@ def smoke_record(condition):
 class SmokeTests(unittest.TestCase):
     def test_all_gates_pass_for_valid_fixture(self):
         records = [smoke_record("B0") for _ in range(3)] + [smoke_record("T-H")]
-        report = evaluate_smoke_run(records, realized_ratio_absolute_tolerance=0.05)
+        report = evaluate_smoke_run(
+            records, realized_ratio_absolute_tolerance=0.05, max_runs=4
+        )
         self.assertTrue(report.passed)
         self.assertEqual(report.estimated_main_cost_usd, 4.8)
 
@@ -36,7 +38,9 @@ class SmokeTests(unittest.TestCase):
         records[0]["tokens"]["provider_input"] = 999
         records[1]["success"] = False
         records[2]["success"] = False
-        report = evaluate_smoke_run(records, realized_ratio_absolute_tolerance=0.05)
+        report = evaluate_smoke_run(
+            records, realized_ratio_absolute_tolerance=0.05, max_runs=4
+        )
         failed = {gate.name for gate in report.gates if not gate.passed}
         self.assertIn("channel_identity", failed)
         self.assertIn("baseline_success", failed)
@@ -48,10 +52,19 @@ class SmokeTests(unittest.TestCase):
         retry["success"] = False
         retry["tokens"]["provider_input"] = 999
         report = evaluate_smoke_run(
-            [retry, *records], realized_ratio_absolute_tolerance=0.05
+            [retry, *records], realized_ratio_absolute_tolerance=0.05, max_runs=4
         )
         self.assertEqual(report.run_count, 4)
         self.assertTrue(report.passed)
+
+    def test_incomplete_valid_smoke_does_not_pass(self):
+        records = [smoke_record("B0") for _ in range(3)] + [smoke_record("T-H")]
+        records[0]["analysis_valid"] = False
+        report = evaluate_smoke_run(
+            records, realized_ratio_absolute_tolerance=0.05, max_runs=4
+        )
+        gate = next(value for value in report.gates if value.name == "run_count")
+        self.assertFalse(gate.passed)
 
 
 if __name__ == "__main__":

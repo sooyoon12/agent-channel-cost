@@ -10,6 +10,7 @@ from src.analysis.metrics import (
     displacement_decomposition,
     mcnemar_exact,
     summarize_conditions,
+    summarize_subgroups,
 )
 from src.analysis.reporting import write_analysis_outputs
 
@@ -19,6 +20,7 @@ def record(task_id, pair_id, condition, repetition, model_cost, shadow_cost=None
         "task_id": task_id,
         "pair_id": pair_id,
         "language": task_id.rsplit("-", 1)[1],
+        "sensitivity_group": "neutral",
         "condition": condition,
         "repetition": repetition,
         "success": success,
@@ -87,10 +89,28 @@ class AnalysisTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             analysis = write_analysis_outputs(values, directory, bootstrap_replicates=20)
             self.assertNotIn("O", analysis["cost_transfer"])
+            self.assertEqual(analysis["audit"]["analysis_valid_rows"], len(values))
+            self.assertEqual(set(analysis["displacement_decomposition"]), {"I-H", "T-H"})
+            self.assertEqual(len(analysis["baseline_repeat_variance"]), 4)
             from pathlib import Path
 
             self.assertTrue((Path(directory) / "summary.json").exists())
             self.assertTrue((Path(directory) / "condition_summary.csv").exists())
+
+    def test_invalid_rows_are_excluded_from_all_summaries(self):
+        values = fixture_records()
+        invalid = deepcopy(next(value for value in values if value["condition"] == "I-H"))
+        invalid["analysis_valid"] = False
+        invalid["success"] = False
+        summary = summarize_conditions([*values, invalid])
+        self.assertEqual(summary["I-H"]["run_count"], 4)
+        self.assertEqual(mcnemar_exact([*values, invalid], "I-H").concordant_success, 4)
+
+    def test_language_subgroups_preserve_condition_counts(self):
+        grouped = summarize_subgroups(fixture_records(), "language")
+        self.assertEqual(set(grouped), {"ko", "en"})
+        self.assertEqual(grouped["ko"]["B0"]["run_count"], 6)
+        self.assertEqual(grouped["en"]["I-H"]["run_count"], 2)
 
     def test_missing_baseline_repetition_is_rejected(self):
         values = fixture_records()

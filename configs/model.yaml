@@ -3,7 +3,8 @@ base_url: https://api.openai.com/v1
 api_key_env: OPENAI_API_KEY
 model_id: gpt-5.6-terra
 requested_model_label: gpt-5.6-terra
-temperature: 0
+# GPT-5.6 Terra rejects the temperature parameter; use the model default.
+temperature: null
 reasoning_effort: low
 tokenizer:
   exact_encoding: o200k_base

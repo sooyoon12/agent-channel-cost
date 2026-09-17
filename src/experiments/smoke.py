@@ -80,7 +80,7 @@ def evaluate_smoke_run(
     )
     estimated_main = average_cost * main_run_count
     gates = (
-        SmokeGate("run_count", len(values) <= max_runs, len(values), f"<= {max_runs}"),
+        SmokeGate("run_count", len(values) == max_runs, len(values), f"== {max_runs}"),
         SmokeGate("channel_identity", all(identities), all(identities), "all true"),
         SmokeGate("shadow_paths", all(shadow_valid), all(shadow_valid), "all true"),
         SmokeGate("t_input_share", t_share >= 0.4, t_share, ">= 0.4"),

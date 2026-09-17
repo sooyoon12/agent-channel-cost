@@ -26,8 +26,8 @@ def validate_live_configuration(
         issues.append("model.model_id differs from the frozen value gpt-5.6-terra")
     if model.get("model_id") != model.get("requested_model_label"):
         issues.append("model.model_id differs from the frozen requested model label")
-    if model.get("temperature") != 0:
-        issues.append("model.temperature differs from the frozen value 0")
+    if model.get("temperature") is not None:
+        issues.append("model.temperature must be null because Terra rejects the parameter")
     if model.get("reasoning_effort") != "low":
         issues.append("model.reasoning_effort differs from the frozen value low")
     tokenizer = model.get("tokenizer", {})

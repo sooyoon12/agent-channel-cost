@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections import defaultdict
+from collections import Counter, defaultdict
 from dataclasses import asdict, dataclass
 from decimal import Decimal
 import math
@@ -219,6 +219,8 @@ def bootstrap_cdr(
 def summarize_conditions(records: Iterable[Mapping[str, Any]]) -> dict[str, dict[str, Any]]:
     groups: dict[str, list[Mapping[str, Any]]] = defaultdict(list)
     for record in records:
+        if not record.get("analysis_valid", True):
+            continue
         groups[record["condition"]].append(record)
     summaries: dict[str, dict[str, Any]] = {}
     for condition, values in sorted(groups.items()):
@@ -247,6 +249,18 @@ def summarize_conditions(records: Iterable[Mapping[str, Any]]) -> dict[str, dict
             "mean_provider_output_tokens": _mean_nested(values, "tokens", "provider_total_output"),
         }
     return summaries
+
+
+def summarize_subgroups(
+    records: Iterable[Mapping[str, Any]], field: str
+) -> dict[str, dict[str, dict[str, Any]]]:
+    groups: dict[str, list[Mapping[str, Any]]] = defaultdict(list)
+    for record in records:
+        if record.get("analysis_valid", True):
+            groups[str(record[field])].append(record)
+    return {
+        group: summarize_conditions(values) for group, values in sorted(groups.items())
+    }
 
 
 def _mean_nested(
@@ -340,7 +354,11 @@ def displacement_decomposition(
     compressor_cost = 0.0
     observation_count = 0
     for record in values:
-        if record["condition"] != condition or not record["shadow"]["valid"]:
+        if (
+            record["condition"] != condition
+            or not record.get("analysis_valid", True)
+            or not record["shadow"]["valid"]
+        ):
             continue
         task_id = record["task_id"]
         row = components(record, shadow=True)
@@ -403,7 +421,11 @@ def mcnemar_exact(records: Iterable[Mapping[str, Any]], condition: str) -> McNem
         task_id: sum(bool(value["success"]) for value in group) * 2 >= len(group)
         for task_id, group in baseline_groups.items()
     }
-    condition_values = [value for value in values if value["condition"] == condition]
+    condition_values = [
+        value
+        for value in values
+        if value["condition"] == condition and value.get("analysis_valid", True)
+    ]
     seen: set[str] = set()
     cells = {(True, True): 0, (True, False): 0, (False, True): 0, (False, False): 0}
     for value in condition_values:
@@ -432,11 +454,51 @@ def mcnemar_exact(records: Iterable[Mapping[str, Any]], condition: str) -> McNem
 
 
 def serializable_analysis(
-    records: Sequence[Mapping[str, Any]], *, bootstrap_replicates: int = 10_000
+    records: Sequence[Mapping[str, Any]],
+    *,
+    bootstrap_replicates: int = 10_000,
+    uncached_input_price_per_million: float = 2.0,
+    output_price_per_million: float = 12.0,
+    reasoning_price_per_million: float | None = None,
 ) -> dict[str, Any]:
-    result: dict[str, Any] = {"conditions": summarize_conditions(records), "cost_transfer": {}}
+    valid_records = tuple(record for record in records if record.get("analysis_valid", True))
+    invalid_records = tuple(record for record in records if not record.get("analysis_valid", True))
+    result: dict[str, Any] = {
+        "audit": {
+            "canonical_attempt_rows": len(records),
+            "analysis_valid_rows": len(valid_records),
+            "excluded_rows": len(invalid_records),
+            "excluded_by_failure_type": dict(
+                sorted(Counter(str(record.get("failure_type")) for record in invalid_records).items())
+            ),
+            "excluded_by_condition": dict(
+                sorted(Counter(str(record.get("condition")) for record in invalid_records).items())
+            ),
+        },
+        "conditions": summarize_conditions(valid_records),
+        "failure_types_by_condition": {
+            condition: dict(
+                sorted(
+                    Counter(
+                        str(record.get("failure_type"))
+                        for record in valid_records
+                        if record["condition"] == condition
+                        and record.get("failure_type") is not None
+                    ).items()
+                )
+            )
+            for condition in sorted({str(record["condition"]) for record in valid_records})
+        },
+        "subgroups": {
+            "language": summarize_subgroups(valid_records, "language"),
+            "sensitivity_group": summarize_subgroups(valid_records, "sensitivity_group"),
+        },
+        "baseline_repeat_variance": baseline_repeat_variance(valid_records),
+        "displacement_decomposition": {},
+        "cost_transfer": {},
+    }
     for condition in ("I-H", "T-H"):
-        observations = build_cost_transfer_observations(records, condition)
+        observations = build_cost_transfer_observations(valid_records, condition)
         aggregate = aggregate_cost_transfer(observations)
         interval = bootstrap_cdr(observations, replicates=bootstrap_replicates)
         aggregate_value = asdict(aggregate)
@@ -446,6 +508,13 @@ def serializable_analysis(
         result["cost_transfer"][condition] = {
             "aggregate": aggregate_value,
             "cdr_bootstrap_95": asdict(interval),
-            "mcnemar": asdict(mcnemar_exact(records, condition)),
+            "mcnemar": asdict(mcnemar_exact(valid_records, condition)),
         }
+        result["displacement_decomposition"][condition] = displacement_decomposition(
+            valid_records,
+            condition,
+            uncached_input_price_per_million=uncached_input_price_per_million,
+            output_price_per_million=output_price_per_million,
+            reasoning_price_per_million=reasoning_price_per_million,
+        )
     return result

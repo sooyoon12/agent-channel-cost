@@ -4,5 +4,8 @@ __pycache__/
 .coverage
 .venv/
 *.egg-info/
+.env
+.env.*
+!.env.example
 results/raw/*.jsonl
 results/smoke/*.jsonl

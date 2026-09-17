@@ -115,6 +115,42 @@ def plan_checksum(plan: Iterable[RunPlanEntry]) -> str:
     return hashlib.sha256(payload.encode("utf-8")).hexdigest()
 
 
+def provider_error_is_retryable(record: Mapping[str, object]) -> bool:
+    events = record.get("events")
+    if not isinstance(events, list):
+        return False
+    return any(
+        isinstance(event, Mapping)
+        and event.get("event_type") == "provider_error"
+        and event.get("retryable") is True
+        for event in events
+    )
+
+
+def canonical_plan_attempts(
+    records: Iterable[Mapping[str, object]],
+) -> tuple[Mapping[str, object], ...]:
+    """Keep retries through the first terminal attempt for each plan ordinal.
+
+    Provider errors are retryable transport attempts. Every other outcome,
+    including an accounting-invalid row, is terminal for that planned run.
+    Later accidental replays remain in the raw log but are not research rows.
+    """
+
+    selected: list[Mapping[str, object]] = []
+    terminal_ordinals: set[int] = set()
+    for record in records:
+        ordinal = record.get("plan_ordinal")
+        if not isinstance(ordinal, int):
+            raise ValueError("run record is missing an integer plan_ordinal")
+        if ordinal in terminal_ordinals:
+            continue
+        selected.append(record)
+        if record.get("failure_type") != "provider_error":
+            terminal_ordinals.add(ordinal)
+    return tuple(selected)
+
+
 def execute_plan(
     plan: Iterable[RunPlanEntry],
     tasks: Sequence[SemanticTask],
@@ -150,16 +186,24 @@ def execute_plan(
             record = dict(result.record)
             record["plan_ordinal"] = entry.ordinal
             record["provider_attempt"] = attempt + 1
-            record["analysis_valid"] = record.get("failure_type") != "provider_error"
+            record["analysis_valid"] = record.get("failure_type") not in {
+                "provider_error",
+                "accounting_invalid",
+            }
             logger.append(record)
             cumulative += Decimal(str(record["model_cost_usd"]["billed"])) + Decimal(
                 str(record["compressor_cost_usd"]["billed"])
             )
-            if record["failure_type"] == "provider_error" and attempt < provider_error_retries:
+            if (
+                record["failure_type"] == "provider_error"
+                and provider_error_is_retryable(record)
+                and attempt < provider_error_retries
+            ):
                 continue
             if record["failure_type"] == "provider_error":
+                attempts = attempt + 1
                 raise RuntimeError(
-                    f"provider failed after {provider_error_retries + 1} attempts at plan ordinal {entry.ordinal}"
+                    f"provider failed after {attempts} attempt(s) at plan ordinal {entry.ordinal}"
                 )
             records.append(record)
             break

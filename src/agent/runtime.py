@@ -10,7 +10,13 @@ import json
 from typing import Any, Mapping
 import uuid
 
-from src.accounting.channels import Channel, classify_input_item, classify_output_item, count_input_channels
+from src.accounting.channels import (
+    Channel,
+    classify_input_item,
+    classify_output_item,
+    count_input_channels,
+    count_input_item_content,
+)
 from src.accounting.invariants import check_input_residual
 from src.accounting.pricing import PricingSchedule, calculate_model_cost
 from src.accounting.shadow import (
@@ -36,7 +42,7 @@ class ExperimentCondition(str, Enum):
 @dataclass(frozen=True)
 class RuntimeSettings:
     model: str
-    temperature: float = 0
+    temperature: float | None = None
     reasoning_effort: str = "low"
     max_output_tokens: int = 2048
     max_turns: int = 6
@@ -172,6 +178,7 @@ class AgentRuntime:
         billed_model = list_model = Decimal(0)
         turn_count = 0
         provider_error = False
+        accounting_invalid_reason: str | None = None
         repeat_blocked = False
         ended_with_final_output = False
         attempted_call_counts: dict[tuple[str, str], int] = {}
@@ -215,7 +222,14 @@ class AgentRuntime:
                 response = self.provider.complete(request)
             except Exception as exc:  # Provider adapters must translate details into the event log.
                 provider_error = True
-                events.append({"turn": turn_count, "event_type": "provider_error", "message": str(exc)})
+                events.append(
+                    {
+                        "turn": turn_count,
+                        "event_type": "provider_error",
+                        "message": str(exc),
+                        "retryable": bool(getattr(exc, "retryable", False)),
+                    }
+                )
                 break
             residual = check_input_residual(
                 channel_counts.i_tokens,
@@ -225,7 +239,65 @@ class AgentRuntime:
                 fractional_tolerance=self.settings.residual_fractional_tolerance,
             )
             if not residual.valid:
-                raise ValueError(residual.reason)
+                item_diagnostics = [
+                    {
+                        "index": index,
+                        "type": item.get("type", "message"),
+                        "role": item.get("role"),
+                        "channel": classify_input_item(item).channel.value,
+                        "content_tokens": count_input_item_content(item, self.tokenizer),
+                        "id_tokens": self.tokenizer.count_text(str(item.get("id", ""))),
+                        "call_id_tokens": self.tokenizer.count_text(
+                            str(item.get("call_id", ""))
+                        ),
+                        "status_tokens": self.tokenizer.count_text(
+                            str(item.get("status", ""))
+                        ),
+                        "encrypted_tokens": self.tokenizer.count_text(
+                            str(item.get("encrypted_content", ""))
+                        ),
+                    }
+                    for index, item in enumerate(sent)
+                ]
+                accounting_invalid_reason = (
+                    f"{residual.reason}: turn={turn_count}, "
+                    f"local_i={channel_counts.i_tokens}, local_t={channel_counts.t_tokens}, "
+                    f"provider_input={response.usage.input_tokens}, "
+                    f"residual={residual.residual_tokens}, allowed={residual.allowed_tokens}"
+                )
+                request_cost = calculate_model_cost(response.usage, self.pricing)
+                billed_model += request_cost.billed.total
+                list_model += request_cost.list_price.total
+                total_i += channel_counts.i_tokens
+                total_t += channel_counts.t_tokens
+                total_residual += residual.residual_tokens
+                total_provider_input += response.usage.input_tokens
+                if response.usage.cached_input_tokens is None:
+                    cached_available = False
+                else:
+                    total_cached += response.usage.cached_input_tokens
+                if response.usage.cache_write_input_tokens is None:
+                    cache_write_available = False
+                else:
+                    total_cache_write += response.usage.cache_write_input_tokens
+                total_output += response.usage.output_tokens
+                if response.usage.reasoning_output_tokens is None:
+                    reasoning_available = False
+                else:
+                    total_reasoning += response.usage.reasoning_output_tokens
+                events.append(
+                    {
+                        "turn": turn_count,
+                        "event_type": "accounting_error",
+                        "message": accounting_invalid_reason,
+                        "items": item_diagnostics,
+                        "provider_output_tokens": response.usage.output_tokens,
+                        "provider_reasoning_tokens": response.usage.reasoning_output_tokens,
+                        "latency_ms": response.latency_ms,
+                        "price_version": self.pricing.version,
+                    }
+                )
+                break
             if response.usage.input_tokens >= self.settings.max_request_input_tokens:
                 raise ValueError("provider input reached or exceeded the 240K analysis limit")
             request_cost = calculate_model_cost(response.usage, self.pricing)
@@ -351,6 +423,12 @@ class AgentRuntime:
                 "repeated_call",
                 "an identical tool call beyond the configured limit was blocked before execution",
             )
+        elif accounting_invalid_reason is not None:
+            evaluation = EvaluationResult(
+                False,
+                "accounting_invalid",
+                accounting_invalid_reason,
+            )
         elif (
             not provider_error
             and turn_count >= self.settings.max_turns
@@ -420,7 +498,7 @@ class AgentRuntime:
                 "path_a_list_cost": float(shadow.path_a_list_cost),
                 "path_b_list_cost": float(shadow.path_b_list_cost),
                 "difference": float(shadow.difference),
-                "valid": shadow.valid,
+                "valid": shadow.valid and accounting_invalid_reason is None,
             },
             "events": events,
         }
