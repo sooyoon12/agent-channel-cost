@@ -1,0 +1,58 @@
+{
+  "contract_guard_recommended": true,
+  "methods": [
+    {
+      "algorithms_observed": [
+        "uniform_extract"
+      ],
+      "analysis_valid_count": 77,
+      "cdr": {
+        "estimate": -0.34549627461415644,
+        "lower": -0.682472637523629,
+        "upper": -0.14326638241479264
+      },
+      "list_price_saving": {
+        "estimate": 0.14709080132505717,
+        "lower": 0.12208789064403056,
+        "upper": 0.17044348262689818
+      },
+      "mean_realized_ratio": 0.5944218648520275,
+      "method": "uniform_extract",
+      "one_sided_95_harm_upper": 0.25997184354126024,
+      "planned_run_count": 80,
+      "safe_and_cost_saving": false,
+      "success_rate_planned": 0.825
+    },
+    {
+      "algorithms_observed": [
+        "contract_guard"
+      ],
+      "analysis_valid_count": 80,
+      "cdr": {
+        "estimate": 0.00236393821279053,
+        "lower": -0.021992171158663785,
+        "upper": 0.027829216206908227
+      },
+      "list_price_saving": {
+        "estimate": 0.12608515679966975,
+        "lower": 0.10668659676980628,
+        "upper": 0.13943907461528837
+      },
+      "mean_realized_ratio": 0.8889483911879271,
+      "method": "contract_guard",
+      "one_sided_95_harm_upper": 0.03675419777998229,
+      "planned_run_count": 80,
+      "safe_and_cost_saving": true,
+      "success_rate_planned": 1.0
+    }
+  ],
+  "paired_success_test": {
+    "exact_two_sided_p": 0.0001220703125,
+    "first_only_success": 14,
+    "matched_tasks": 80,
+    "second_only_success": 0
+  },
+  "status": "exploratory_post_ratio_sweep",
+  "success_noninferiority_margin": 0.05,
+  "target_ratio": 0.8
+}

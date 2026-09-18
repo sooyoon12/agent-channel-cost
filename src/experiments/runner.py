@@ -22,6 +22,7 @@ class RunPlanEntry:
     language: str
     condition: ExperimentCondition
     repetition: int
+    target_ratio: float | None = None
 
 
 @dataclass(frozen=True)
@@ -100,6 +101,109 @@ def build_smoke_plan(tasks: Sequence[SemanticTask], *, max_runs: int = 20) -> tu
     )
 
 
+def build_ratio_sweep_plan(
+    tasks: Sequence[SemanticTask],
+    *,
+    target_ratios: Sequence[float] = (0.6, 0.8),
+    order_seed: int = 20260914,
+) -> tuple[RunPlanEntry, ...]:
+    """Build the frozen follow-up plan without replaying B0 or O.
+
+    Existing B0 trajectories remain the paired reference.  The follow-up varies
+    only the retained fraction for the two input channels that showed material
+    behavioral effects in the main experiment.
+    """
+
+    if len(tasks) != 40:
+        raise ValueError("ratio sweep requires exactly 40 semantic pairs")
+    ratios = tuple(float(value) for value in target_ratios)
+    if not ratios or any(not 0 < value < 1 for value in ratios):
+        raise ValueError("target ratios must be non-empty and lie in (0, 1)")
+    if len(set(ratios)) != len(ratios):
+        raise ValueError("target ratios must be unique")
+    entries = [
+        (task.pair_id, language, condition, 1, ratio)
+        for task in tasks
+        for language in ("ko", "en")
+        for condition in (
+            ExperimentCondition.INSTRUCTION_HISTORY,
+            ExperimentCondition.TOOL_OBSERVATION,
+        )
+        for ratio in ratios
+    ]
+    random.Random(order_seed).shuffle(entries)
+    return tuple(
+        RunPlanEntry(index, pair_id, language, condition, repetition, ratio)
+        for index, (pair_id, language, condition, repetition, ratio) in enumerate(entries, 1)
+    )
+
+
+def build_ratio_sweep_smoke_plan(
+    tasks: Sequence[SemanticTask],
+    *,
+    target_ratios: Sequence[float] = (0.6, 0.8),
+) -> tuple[RunPlanEntry, ...]:
+    """Exercise every follow-up cell on representative tasks in at most 16 runs."""
+
+    selected_ids = ("precise-001", "precise-011", "long-001", "long-011")
+    selected = [task for task in tasks if task.pair_id in selected_ids]
+    if len(selected) != len(selected_ids):
+        raise ValueError("ratio sweep smoke tasks are missing")
+    entries = []
+    for index, task in enumerate(selected):
+        language = "ko" if index % 2 == 0 else "en"
+        for condition in (
+            ExperimentCondition.INSTRUCTION_HISTORY,
+            ExperimentCondition.TOOL_OBSERVATION,
+        ):
+            for ratio in target_ratios:
+                entries.append((task.pair_id, language, condition, 1, float(ratio)))
+    return tuple(
+        RunPlanEntry(index, pair_id, language, condition, repetition, ratio)
+        for index, (pair_id, language, condition, repetition, ratio) in enumerate(entries, 1)
+    )
+
+
+def build_contract_guard_plan(
+    tasks: Sequence[SemanticTask],
+    *,
+    target_ratio: float = 0.8,
+    order_seed: int = 20260919,
+) -> tuple[RunPlanEntry, ...]:
+    """Exploratory architecture comparison against uniform T-H at ratio 0.8."""
+
+    if len(tasks) != 40:
+        raise ValueError("contract guard plan requires exactly 40 semantic pairs")
+    entries = [
+        (task.pair_id, language, ExperimentCondition.TOOL_OBSERVATION, 1, target_ratio)
+        for task in tasks
+        for language in ("ko", "en")
+    ]
+    random.Random(order_seed).shuffle(entries)
+    return tuple(
+        RunPlanEntry(index, pair_id, language, condition, repetition, ratio)
+        for index, (pair_id, language, condition, repetition, ratio) in enumerate(entries, 1)
+    )
+
+
+def build_contract_guard_smoke_plan(
+    tasks: Sequence[SemanticTask], *, target_ratio: float = 0.8
+) -> tuple[RunPlanEntry, ...]:
+    selected_ids = ("precise-001", "precise-011", "long-001", "long-011")
+    selected = [task for task in tasks if task.pair_id in selected_ids]
+    return tuple(
+        RunPlanEntry(
+            index,
+            task.pair_id,
+            "ko" if index % 2 else "en",
+            ExperimentCondition.TOOL_OBSERVATION,
+            1,
+            target_ratio,
+        )
+        for index, task in enumerate(selected, 1)
+    )
+
+
 def plan_checksum(plan: Iterable[RunPlanEntry]) -> str:
     values = [
         {
@@ -108,6 +212,7 @@ def plan_checksum(plan: Iterable[RunPlanEntry]) -> str:
             "language": entry.language,
             "condition": entry.condition.value,
             "repetition": entry.repetition,
+            "target_ratio": entry.target_ratio,
         }
         for entry in plan
     ]
@@ -155,7 +260,7 @@ def execute_plan(
     plan: Iterable[RunPlanEntry],
     tasks: Sequence[SemanticTask],
     *,
-    runtime_factory: Callable[[SemanticTask], AgentRuntime],
+    runtime_factory: Callable[[SemanticTask, RunPlanEntry], AgentRuntime],
     logger: JsonlRunLogger,
     provider_error_retries: int = 1,
     budget_guard: BudgetGuard | None = None,
@@ -176,7 +281,7 @@ def execute_plan(
             if not status.allowed:
                 raise RuntimeError(status.reason)
         for attempt in range(provider_error_retries + 1):
-            runtime = runtime_factory(task)
+            runtime = runtime_factory(task, entry)
             result = runtime.run(
                 task,
                 language=entry.language,

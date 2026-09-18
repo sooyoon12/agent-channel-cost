@@ -2,6 +2,7 @@ import json
 import re
 import unittest
 
+from src.compression.contract_aware import ContractAwareCompressor
 from src.compression.fixed_ratio import FixedRatioCompressor
 from src.compression.identity import IdentityCompressor
 
@@ -54,6 +55,34 @@ class CompressionTests(unittest.TestCase):
         self.assertEqual(records[0], 0)
         self.assertEqual(records[-1], 19)
 
+    def test_contract_aware_drops_only_declared_non_contract_fields(self):
+        value = {
+            "dataset_id": "DS-1",
+            "records": [
+                {
+                    "record_id": "R-1",
+                    "evidence_code": "E-1",
+                    "amount": 10,
+                    "notes": "verbose expendable explanation",
+                }
+            ],
+        }
+        result = ContractAwareCompressor().compress(
+            value, target_ratio=0.8, tokenizer=self.counter
+        )
+        self.assertNotIn("notes", result.compressed["records"][0])
+        self.assertEqual(result.compressed["records"][0]["record_id"], "R-1")
+        self.assertEqual(result.compressed["records"][0]["evidence_code"], "E-1")
+        self.assertEqual(result.algorithm, "contract_guard")
+
+    def test_contract_aware_accepts_a_safety_floor_above_target(self):
+        value = {"record_id": "R-1", "evidence_code": "E-1"}
+        result = ContractAwareCompressor().compress(
+            value, target_ratio=0.4, tokenizer=self.counter
+        )
+        self.assertEqual(result.compressed, value)
+        self.assertEqual(result.realized_ratio, 1.0)
+
     def test_invalid_ratio_is_rejected(self):
         with self.assertRaises(ValueError):
             FixedRatioCompressor().compress("text", target_ratio=0, tokenizer=self.counter)
@@ -61,4 +90,3 @@ class CompressionTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-

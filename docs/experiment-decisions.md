@@ -97,6 +97,37 @@ This file records operational choices made before any model result is observed.
 The live preflight fails closed if any frozen value or tokenizer version is
 missing or differs from the installed environment.
 
+## Ratio follow-up frozen on 2026-09-18
+
+This stage was specified after the 0.4 main result, but before any 0.6 or 0.8
+follow-up response was observed.
+
+- Cells: I-H and T-H at retained ratios 0.6 and 0.8; 80 runs per cell, 320 total.
+- Existing repeated B0 runs are reused; B0 and O are not replayed.
+- Safety gate: the one-sided 95% upper bound on success harm must be at most
+  5 percentage points. Accounting-invalid rows count as failures for this gate.
+- Cost gate: the pair-bootstrap 95% interval for list-price saving must have a
+  lower bound above zero.
+- Four success comparisons use Holm correction. Cost/CDR analysis continues to
+  use only accounting-valid rows, with invalid counts reported separately.
+- Execution order seed: `20260918`; bootstrap unit: `pair_id`; 10,000 replicates.
+
+## Exploratory architecture stage after the ratio follow-up
+
+No uniform-extraction cell passed the safety gate. Tool Contract-Preserving
+Compression (TCPC; internal algorithm id `contract_guard`) was therefore
+created as a post-ratio-sweep exploratory architecture and is not presented as
+part of the original confirmatory plan. The paper-facing name avoids collision
+with unrelated systems already named ContractGuard.
+
+- Condition: T-H at requested ratio 0.8; 80 runs; seed `20260919`.
+- The adapter declares `notes` non-contractual. Every other key and value is
+  preserved exactly.
+- The requested ratio is a budget target, not permission to remove contract
+  fields. Compression stops at the contract-preserving safety floor.
+- The direct comparator is uniform extraction at T-H ratio 0.8 on the same 80
+  task-language instances.
+
 ## Offline validation only
 
 The scripted provider fixes behavior and therefore must produce CDR 0. It is

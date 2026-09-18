@@ -1,0 +1,35 @@
+[
+  {
+    "condition": "I-H",
+    "list_cost_per_success_usd": 0.042506999999999996,
+    "list_price_cost_saving": 0.486771586370603,
+    "provider_input_token_saving": 0.7300289836454521,
+    "success_drop_vs_b0": 0.9117647058823529,
+    "success_gated_eligible": false,
+    "success_gated_recommends": false,
+    "success_rate": 0.08823529411764706,
+    "token_only_recommends": true
+  },
+  {
+    "condition": "O",
+    "list_cost_per_success_usd": 0.007202725,
+    "list_price_cost_saving": 0.01439083547808473,
+    "provider_input_token_saving": -0.0005446096578354265,
+    "success_drop_vs_b0": 0.0,
+    "success_gated_eligible": true,
+    "success_gated_recommends": true,
+    "success_rate": 1.0,
+    "token_only_recommends": false
+  },
+  {
+    "condition": "T-H",
+    "list_cost_per_success_usd": 0.007352160000000001,
+    "list_price_cost_saving": 0.3712139958287103,
+    "provider_input_token_saving": 0.56423330533132,
+    "success_drop_vs_b0": 0.375,
+    "success_gated_eligible": false,
+    "success_gated_recommends": false,
+    "success_rate": 0.625,
+    "token_only_recommends": false
+  }
+]

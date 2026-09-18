@@ -5,7 +5,11 @@ import unittest
 from src.agent.runtime import ExperimentCondition
 from src.experiments.runner import (
     BudgetGuard,
+    build_contract_guard_plan,
+    build_contract_guard_smoke_plan,
     build_main_plan,
+    build_ratio_sweep_plan,
+    build_ratio_sweep_smoke_plan,
     build_smoke_plan,
     canonical_plan_attempts,
     plan_checksum,
@@ -41,6 +45,42 @@ class RunnerTests(unittest.TestCase):
         self.assertEqual(smoke_counts[ExperimentCondition.CONCISE_OUTPUT], 4)
         with self.assertRaises(ValueError):
             build_smoke_plan(tasks, max_runs=21)
+
+    def test_ratio_sweep_plan_has_four_prespecified_cells(self):
+        tasks = generate_task_set()
+        plan = build_ratio_sweep_plan(tasks)
+        self.assertEqual(len(plan), 320)
+        counts = Counter((entry.condition, entry.target_ratio) for entry in plan)
+        self.assertEqual(
+            counts,
+            {
+                (ExperimentCondition.INSTRUCTION_HISTORY, 0.6): 80,
+                (ExperimentCondition.INSTRUCTION_HISTORY, 0.8): 80,
+                (ExperimentCondition.TOOL_OBSERVATION, 0.6): 80,
+                (ExperimentCondition.TOOL_OBSERVATION, 0.8): 80,
+            },
+        )
+        self.assertEqual(
+            plan_checksum(plan), plan_checksum(build_ratio_sweep_plan(tasks))
+        )
+        self.assertEqual(len(build_ratio_sweep_smoke_plan(tasks)), 16)
+
+    def test_ratio_sweep_rejects_invalid_or_duplicate_ratios(self):
+        tasks = generate_task_set()
+        with self.assertRaises(ValueError):
+            build_ratio_sweep_plan(tasks, target_ratios=())
+        with self.assertRaises(ValueError):
+            build_ratio_sweep_plan(tasks, target_ratios=(0.6, 0.6))
+        with self.assertRaises(ValueError):
+            build_ratio_sweep_plan(tasks, target_ratios=(1.0,))
+
+    def test_contract_guard_plan_is_a_single_eighty_run_cell(self):
+        tasks = generate_task_set()
+        plan = build_contract_guard_plan(tasks)
+        self.assertEqual(len(plan), 80)
+        self.assertEqual({entry.condition for entry in plan}, {ExperimentCondition.TOOL_OBSERVATION})
+        self.assertEqual({entry.target_ratio for entry in plan}, {0.8})
+        self.assertEqual(len(build_contract_guard_smoke_plan(tasks)), 4)
 
     def test_budget_warning_and_hard_stop(self):
         guard = BudgetGuard()

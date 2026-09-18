@@ -1,0 +1,10 @@
+# Exploratory architecture study specified after the ratio sweep.
+algorithm: contract_guard
+algorithm_version: 1
+paper_name: tool_contract_preserving_compression
+target_ratio: 0.8
+condition: T-H
+non_contract_keys: notes
+comparison_cell: uniform_extract,T-H,0.8
+execution_order_seed: 20260919
+confirmatory_status: exploratory_post_ratio_sweep

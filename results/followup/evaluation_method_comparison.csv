@@ -1,0 +1,4 @@
+condition,provider_input_token_saving,list_price_cost_saving,success_rate,success_drop_vs_b0,list_cost_per_success_usd,token_only_recommends,success_gated_eligible,success_gated_recommends
+I-H,0.7300289836454521,0.486771586370603,0.08823529411764706,0.9117647058823529,0.042506999999999996,True,False,False
+O,-0.0005446096578354265,0.01439083547808473,1.0,0.0,0.007202725,False,True,True
+T-H,0.56423330533132,0.3712139958287103,0.625,0.375,0.007352160000000001,False,False,False

@@ -9,3 +9,4 @@ __pycache__/
 !.env.example
 results/raw/*.jsonl
 results/smoke/*.jsonl
+results/followup/smoke/

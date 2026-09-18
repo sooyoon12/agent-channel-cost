@@ -35,6 +35,12 @@ Terra가 `temperature`를 거부하므로 요청에서는 해당 파라미터를
 - 실제 provider는 preflight 통과와 명시적 live 허용 전까지 runtime에서 차단된다.
 - provider 장애 재시도는 연구 행동 재시도와 분리되며 기본 최대 1회다.
 - `scripts/analyze_results.py`가 processed JSON/CSV, 실행 audit JSON과 필수 SVG 두 개를 만든다.
+- 후속 유지율 실험은 I-H/T-H의 0.6·0.8 네 셀, 총 320회이며 기존 B0를 재사용한다.
+- 탐색적 TCPC(Tool Contract-Preserving Compression, 내부 algorithm id
+  `contract_guard`)는 도구 adapter가 비계약 필드로 선언한 `notes`만 제거하고
+  나머지 구조와 값을 그대로 보존한다. 안전 바닥이 목표보다 높으면 더 줄이지 않는다.
+- `scripts/analyze_followup.py`는 토큰 중심 평가와 성공률 우선 평가 비교, 유지율
+  추적, TCPC 직접 비교를 재생성한다.
 
 모델 ID, 가격, tokenizer, protocol residual 허용치, realized-ratio 허용 오차는
 모두 고정되어 있다. 계정의 모델 접근 권한과 실제 응답 schema는 크레딧을 받은
@@ -45,6 +51,10 @@ Terra가 `temperature`를 거부하므로 요청에서는 해당 파라미터를
 .venv/bin/python scripts/run_experiment.py preflight
 .venv/bin/python scripts/check_smoke.py results/smoke/RUN.jsonl
 .venv/bin/python scripts/analyze_results.py results/raw/runs.jsonl
+.venv/bin/python scripts/run_experiment.py sweep-smoke --output results/smoke/sweep.jsonl --projected-cost-per-run 0.008
+.venv/bin/python scripts/run_experiment.py sweep-main --output results/raw/sweep.jsonl --projected-cost-per-run 0.008
+.venv/bin/python scripts/run_experiment.py guard-main --output results/raw/guard.jsonl --projected-cost-per-run 0.008
+.venv/bin/python scripts/analyze_followup.py --sweep results/raw/sweep.jsonl --guard results/raw/guard.jsonl
 ```
 
 유료 실행은 `run_experiment.py smoke|main --output ...
