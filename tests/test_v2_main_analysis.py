@@ -75,6 +75,14 @@ class V2MainAnalysisTests(unittest.TestCase):
             retained = report[method]["strata"]["all:retained"]["runs"]
             removed = report[method]["strata"]["all:removed"]["runs"]
             self.assertEqual(retained + removed, len(held_out) * 2)
+            self.assertIn("retained_distractor_strata", report[method])
+            self.assertTrue(report[method]["retained_distractor_strata"])
+
+        uniform_retained = report["uniform"]["strata"]["all:retained"]
+        self.assertEqual(uniform_retained["failures"], 0)
+        self.assertIsNotNone(
+            uniform_retained["one_sided_95_upper_failure_rate_if_zero_failures"]
+        )
 
 
 if __name__ == "__main__":

@@ -36,7 +36,8 @@ surface를 함께 만들고, 첫 도구 결과를 읽어야 후속 호출을 완
 - `results/v2/heldout-main-2026-09-21.jsonl`은 누락·중복·checksum 불일치 없이
   완료된 본 실험 원자료다.
 - `scripts/analyze_v2_main.py`는 의미쌍 군집 bootstrap 성공당 비용 CI, Holm 보정,
-  정답 행동 필드 잔존 층화, protocol residual 분포를 재생성한다.
+  정답 행동 필드 잔존·방해 항목 수·turn/reasoning 비용 층화, protocol residual
+  분포를 재생성한다.
 - schema-oracle과 query-aware는 제안 방법이 아니라 각각 상한과 이론적 비용
   하한이다. 초기 I-H는 실제 다중 턴 이력이 아니므로 확증 실험에서 제외했다.
 - 개발 B0의 네 라운드와 중단 기록은 `docs/v2-experiment-decisions.md`에 보존한다.
@@ -55,6 +56,7 @@ surface를 함께 만들고, 첫 도구 결과를 읽어야 후속 호출을 완
   --output results/v2/heldout-main-summary-2026-09-21.json \
   --csv results/v2/heldout-method-summary-2026-09-21.csv \
   --retention-csv results/v2/information-retention-2026-09-21.csv \
+  --retention-distractor-csv results/v2/retention-distractor-strata-2026-09-21.csv \
   --residual-csv results/v2/protocol-residual-summary-2026-09-21.csv
 ```
 

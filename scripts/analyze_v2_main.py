@@ -27,6 +27,7 @@ def main() -> None:
     parser.add_argument("--output", type=Path)
     parser.add_argument("--csv", type=Path)
     parser.add_argument("--retention-csv", type=Path)
+    parser.add_argument("--retention-distractor-csv", type=Path)
     parser.add_argument("--residual-csv", type=Path)
     args = parser.parse_args()
     records = [json.loads(line) for line in args.input.read_text(encoding="utf-8").splitlines() if line]
@@ -50,6 +51,7 @@ def main() -> None:
         with args.csv.open("w", encoding="utf-8", newline="") as stream:
             writer = csv.DictWriter(
                 stream,
+                lineterminator="\n",
                 fieldnames=(
                     "method",
                     "runs",
@@ -127,17 +129,105 @@ def main() -> None:
         with args.retention_csv.open("w", encoding="utf-8", newline="") as stream:
             writer = csv.DictWriter(
                 stream,
-                fieldnames=("method", "stratum", "runs", "successes", "success_rate"),
+                lineterminator="\n",
+                fieldnames=(
+                    "method", "stratum", "runs", "successes", "failures", "success_rate",
+                    "b0_same_pairs_successes", "b0_same_pairs_success_rate",
+                    "success_rate_delta_vs_b0_percentage_points",
+                    "one_sided_95_upper_failure_rate_if_zero_failures",
+                    "mean_turn_count", "mean_tool_call_count",
+                    "mean_provider_reasoning_output_tokens",
+                    "mean_provider_total_output_tokens",
+                    "mean_list_price_cost_per_run_usd",
+                    "turn_count_delta_vs_b0", "tool_call_count_delta_vs_b0",
+                    "reasoning_tokens_delta_vs_b0", "total_output_tokens_delta_vs_b0",
+                    "list_price_cost_delta_vs_b0_usd",
+                ),
             )
             writer.writeheader()
             for method, values in report["information_retention"].items():
                 for stratum, stratum_values in values["strata"].items():
-                    writer.writerow({"method": method, "stratum": stratum, **stratum_values})
+                    behavior = stratum_values["behavior"]
+                    delta = stratum_values["behavior_delta_vs_b0"]
+                    writer.writerow({
+                        "method": method,
+                        "stratum": stratum,
+                        "runs": stratum_values["runs"],
+                        "successes": stratum_values["successes"],
+                        "failures": stratum_values["failures"],
+                        "success_rate": stratum_values["success_rate"],
+                        "b0_same_pairs_successes": stratum_values[
+                            "b0_same_pairs_successes"
+                        ],
+                        "b0_same_pairs_success_rate": stratum_values[
+                            "b0_same_pairs_success_rate"
+                        ],
+                        "success_rate_delta_vs_b0_percentage_points": stratum_values[
+                            "success_rate_delta_vs_b0_percentage_points"
+                        ],
+                        "one_sided_95_upper_failure_rate_if_zero_failures": stratum_values[
+                            "one_sided_95_upper_failure_rate_if_zero_failures"
+                        ],
+                        **behavior,
+                        "turn_count_delta_vs_b0": delta["mean_turn_count"],
+                        "tool_call_count_delta_vs_b0": delta["mean_tool_call_count"],
+                        "reasoning_tokens_delta_vs_b0": delta[
+                            "mean_provider_reasoning_output_tokens"
+                        ],
+                        "total_output_tokens_delta_vs_b0": delta[
+                            "mean_provider_total_output_tokens"
+                        ],
+                        "list_price_cost_delta_vs_b0_usd": delta[
+                            "mean_list_price_cost_per_run_usd"
+                        ],
+                    })
+    if args.retention_distractor_csv:
+        args.retention_distractor_csv.parent.mkdir(parents=True, exist_ok=True)
+        with args.retention_distractor_csv.open("w", encoding="utf-8", newline="") as stream:
+            writer = csv.DictWriter(
+                stream,
+                lineterminator="\n",
+                fieldnames=(
+                    "method", "family", "remaining_distractors", "pair_count", "runs",
+                    "successes", "failures", "success_rate", "b0_same_pairs_success_rate",
+                    "success_rate_delta_vs_b0_percentage_points", "mean_turn_count",
+                    "mean_provider_reasoning_output_tokens", "mean_list_price_cost_per_run_usd",
+                ),
+            )
+            writer.writeheader()
+            for method, values in report["information_retention"].items():
+                for stratum, stratum_values in values["retained_distractor_strata"].items():
+                    family, _ = stratum.rsplit(":", 1)
+                    behavior = stratum_values["behavior"]
+                    writer.writerow({
+                        "method": method,
+                        "family": family,
+                        "remaining_distractors": stratum_values["remaining_distractors"],
+                        "pair_count": stratum_values["pair_count"],
+                        "runs": stratum_values["runs"],
+                        "successes": stratum_values["successes"],
+                        "failures": stratum_values["failures"],
+                        "success_rate": stratum_values["success_rate"],
+                        "b0_same_pairs_success_rate": stratum_values[
+                            "b0_same_pairs_success_rate"
+                        ],
+                        "success_rate_delta_vs_b0_percentage_points": stratum_values[
+                            "success_rate_delta_vs_b0_percentage_points"
+                        ],
+                        "mean_turn_count": behavior["mean_turn_count"],
+                        "mean_provider_reasoning_output_tokens": behavior[
+                            "mean_provider_reasoning_output_tokens"
+                        ],
+                        "mean_list_price_cost_per_run_usd": behavior[
+                            "mean_list_price_cost_per_run_usd"
+                        ],
+                    })
     if args.residual_csv:
         args.residual_csv.parent.mkdir(parents=True, exist_ok=True)
         with args.residual_csv.open("w", encoding="utf-8", newline="") as stream:
             writer = csv.DictWriter(
                 stream,
+                lineterminator="\n",
                 fieldnames=(
                     "method", "runs", "warning_runs", "warning_requests",
                     "run_residual_tokens_median", "run_residual_tokens_p95", "run_residual_tokens_max",

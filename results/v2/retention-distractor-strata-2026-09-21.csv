@@ -1,0 +1,5 @@
+method,family,remaining_distractors,pair_count,runs,successes,failures,success_rate,b0_same_pairs_success_rate,success_rate_delta_vs_b0_percentage_points,mean_turn_count,mean_provider_reasoning_output_tokens,mean_list_price_cost_per_run_usd
+uniform,long_observation,50,51,102,102,0,1.0,0.9607843137254902,3.9215686274509776,3.0,85.08823529411765,0.020208686274509804
+uniform,event_followup,5,10,20,20,0,1.0,1.0,0.0,3.0,34.05,0.0061652
+head_tail,long_observation,50,45,90,83,7,0.9222222222222223,0.9555555555555556,-3.3333333333333326,3.0555555555555554,164.64444444444445,0.022899644444444443
+head_tail,event_followup,5,14,28,28,0,1.0,1.0,0.0,3.0,36.107142857142854,0.006205428571428571

@@ -97,6 +97,89 @@ def _gold_action_fields_survive(task: SemanticTask, compressed: Mapping[str, Any
     raise ValueError(f"unsupported family: {task.task_family}")
 
 
+def _distractor_count(task: SemanticTask, compressed: Mapping[str, Any]) -> int:
+    """Count non-gold candidates remaining in the decision-bearing collection."""
+
+    key = "records" if task.task_family == "long_observation" else "events"
+    candidates = compressed.get(key, [])
+    if not isinstance(candidates, list):
+        return 0
+    return len(candidates) - int(_gold_action_fields_survive(task, compressed))
+
+
+def _optional_mean(values: Sequence[float]) -> float | None:
+    return statistics.fmean(values) if values else None
+
+
+def _retention_stratum_summary(
+    rows: Sequence[Mapping[str, Any]],
+    baseline_rows: Sequence[Mapping[str, Any]],
+) -> dict[str, Any]:
+    successes = sum(bool(row["success"]) for row in rows)
+    failures = len(rows) - successes
+    baseline_successes = sum(bool(row["success"]) for row in baseline_rows)
+
+    def behavior(values: Sequence[Mapping[str, Any]]) -> dict[str, float | None]:
+        return {
+            "mean_turn_count": _optional_mean([
+                float(row["turn_count"]) for row in values if row.get("turn_count") is not None
+            ]),
+            "mean_tool_call_count": _optional_mean([
+                float(row["tool_call_count"])
+                for row in values if row.get("tool_call_count") is not None
+            ]),
+            "mean_provider_reasoning_output_tokens": _optional_mean([
+                float(row["tokens"]["provider_reasoning_output"])
+                for row in values
+                if row.get("tokens", {}).get("provider_reasoning_output") is not None
+            ]),
+            "mean_provider_total_output_tokens": _optional_mean([
+                float(row["tokens"]["provider_total_output"])
+                for row in values
+                if row.get("tokens", {}).get("provider_total_output") is not None
+            ]),
+            "mean_list_price_cost_per_run_usd": _optional_mean([
+                _cost(row, "list_price")
+                for row in values
+                if row.get("model_cost_usd") is not None
+                and row.get("compressor_cost_usd") is not None
+            ]),
+        }
+
+    current_behavior = behavior(rows)
+    baseline_behavior = behavior(baseline_rows)
+    deltas = {
+        name: (
+            current_behavior[name] - baseline_behavior[name]
+            if current_behavior[name] is not None and baseline_behavior[name] is not None
+            else None
+        )
+        for name in current_behavior
+    }
+    return {
+        "runs": len(rows),
+        "successes": successes,
+        "failures": failures,
+        "success_rate": successes / len(rows) if rows else None,
+        "b0_same_pairs_successes": baseline_successes,
+        "b0_same_pairs_success_rate": (
+            baseline_successes / len(baseline_rows) if baseline_rows else None
+        ),
+        "success_rate_delta_vs_b0_percentage_points": (
+            100 * (
+                successes / len(rows) - baseline_successes / len(baseline_rows)
+            )
+            if rows and baseline_rows else None
+        ),
+        "one_sided_95_upper_failure_rate_if_zero_failures": (
+            1 - 0.05 ** (1 / len(rows)) if rows and failures == 0 else None
+        ),
+        "behavior": current_behavior,
+        "b0_same_pairs_behavior": baseline_behavior,
+        "behavior_delta_vs_b0": deltas,
+    }
+
+
 def information_retention_report(
     records: Sequence[Mapping[str, Any]],
     tasks: Sequence[SemanticTask],
@@ -118,6 +201,7 @@ def information_retention_report(
         ("head_tail", HeadTailCompressor()),
     ):
         survives: dict[str, bool] = {}
+        distractors: dict[str, int] = {}
         for task in tasks:
             environment = DeterministicToolEnvironment(task.hidden_state)
             first_call = task.expected_tool_calls[0]
@@ -128,6 +212,7 @@ def information_retention_report(
                 observation, target_ratio=target_ratio, tokenizer=tokenizer
             ).compressed
             survives[task.pair_id] = _gold_action_fields_survive(task, compressed)
+            distractors[task.pair_id] = _distractor_count(task, compressed)
 
         strata = {}
         for family in ("all", "long_observation", "event_followup"):
@@ -141,11 +226,38 @@ def information_retention_report(
                     if survives[task.pair_id] is retained
                     for language in ("ko", "en")
                 ]
-                successes = sum(bool(row["success"]) for row in rows)
-                strata[f"{family}:{'retained' if retained else 'removed'}"] = {
-                    "runs": len(rows),
-                    "successes": successes,
-                    "success_rate": successes / len(rows) if rows else None,
+                baseline_rows = [
+                    by_key[(task.pair_id, language, "b0")]
+                    for task in family_tasks
+                    if survives[task.pair_id] is retained
+                    for language in ("ko", "en")
+                ]
+                strata[f"{family}:{'retained' if retained else 'removed'}"] = (
+                    _retention_stratum_summary(rows, baseline_rows)
+                )
+
+        distractor_strata = {}
+        retained_tasks = [task for task in tasks if survives[task.pair_id]]
+        for family in ("long_observation", "event_followup"):
+            family_tasks = [task for task in retained_tasks if task.task_family == family]
+            for count in sorted({distractors[task.pair_id] for task in family_tasks}):
+                stratum_tasks = [
+                    task for task in family_tasks if distractors[task.pair_id] == count
+                ]
+                rows = [
+                    by_key[(task.pair_id, language, method)]
+                    for task in stratum_tasks
+                    for language in ("ko", "en")
+                ]
+                baseline_rows = [
+                    by_key[(task.pair_id, language, "b0")]
+                    for task in stratum_tasks
+                    for language in ("ko", "en")
+                ]
+                distractor_strata[f"{family}:{count}"] = {
+                    "pair_count": len(stratum_tasks),
+                    "remaining_distractors": count,
+                    **_retention_stratum_summary(rows, baseline_rows),
                 }
 
         retained_mcnemar = {}
@@ -171,6 +283,7 @@ def information_retention_report(
             "removed_pairs": len(survives) - sum(survives.values()),
             "definition": "gold item and all action/decision fields remain exact",
             "strata": strata,
+            "retained_distractor_strata": distractor_strata,
             "mcnemar_vs_b0_among_retained_by_language": retained_mcnemar,
         }
     return result
