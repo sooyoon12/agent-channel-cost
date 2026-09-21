@@ -1,0 +1,24 @@
+{
+  "audit": {
+    "pairs": 75,
+    "th_active_pairs": 75
+  },
+  "dataset_version": "ksc2026-v2-th",
+  "development_gate": {
+    "baseline_floor_inclusive": 0.9,
+    "ceiling_threshold_exclusive": 0.99,
+    "unit_note": "descriptive run-level gate; inference clusters by pair_id"
+  },
+  "development_raw_records_sha256": "3cc0013c6b5a7fbc413c214dd222f2672a9507273e804eecdefade0ea7ade1b3",
+  "files": {
+    "generated_tasks_en.jsonl": "ea5c05c68237a1cb5f21c30b782863bd195bc110495e4f945823ed9af77fd0d6",
+    "generated_tasks_ko.jsonl": "b26fb99b3ef6620bc8386f8d652f8bdb7bd7c4a41849da7421eb61858e7d168f",
+    "semantic_tasks.jsonl": "693de83634ed5fe22d20c0f2e653fe2f9e58196c245286c6bbdefb1d82e3a020"
+  },
+  "generator_version": 2,
+  "scope": "T-H active tasks only; I-H excluded",
+  "semantic_pair_count": 75,
+  "semantic_set_checksum": "0c93e48a58ad59a4e082ba4bf47cdc4fa42031562e2fc0a3b44faac48960dd6f",
+  "status": "frozen_after_development_gate",
+  "task_instance_count": 150
+}

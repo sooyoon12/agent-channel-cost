@@ -23,43 +23,44 @@ OPENAI_API_KEY=sk-여기에_본인_키
 요율을 고정하며, cached read와 cache write를 별도 과금 항목으로 계산한다.
 Terra가 `temperature`를 거부하므로 요청에서는 해당 파라미터를 생략한다.
 
-현재 태스크 생성기는 공통 의미 구조에서 한국어·영어 surface를 함께 만들며,
-`generate_preview()`는 데이터 동결 전 검토용으로 유형별 3쌍만 반환한다.
-도구 환경은 네트워크·현재 시각·전역 난수에 의존하지 않고 run마다 격리된다.
+현재 확증 실험은 v2의 도구 관측(T-H) 압축이다. 공통 의미 구조에서 한국어·영어
+surface를 함께 만들고, 첫 도구 결과를 읽어야 후속 호출을 완성하는 `long`과
+`event` 과제만 사용한다. 도구 환경은 네트워크·현재 시각·전역 난수에 의존하지
+않고 run마다 격리된다.
 
 ## 현재 준비 상태
 
-- `data/manifest.json`은 40개 의미쌍과 한·영 80개 인스턴스의 checksum을 고정한다.
-- `build_main_plan()`은 B0 240회와 나머지 조건 각 80회, 총 480회를 만든다.
-- `build_smoke_plan()`은 최대 20회만 만든다.
-- 실제 provider는 preflight 통과와 명시적 live 허용 전까지 runtime에서 차단된다.
-- provider 장애 재시도는 연구 행동 재시도와 분리되며 기본 최대 1회다.
-- `scripts/analyze_results.py`가 processed JSON/CSV, 실행 audit JSON과 필수 SVG 두 개를 만든다.
-- 후속 유지율 실험은 I-H/T-H의 0.6·0.8 네 셀, 총 320회이며 기존 B0를 재사용한다.
-- 탐색적 TCPC(Tool Contract-Preserving Compression, 내부 algorithm id
-  `contract_guard`)는 도구 adapter가 비계약 필드로 선언한 `notes`만 제거하고
-  나머지 구조와 값을 그대로 보존한다. 안전 바닥이 목표보다 높으면 더 줄이지 않는다.
-- `scripts/analyze_followup.py`는 토큰 중심 평가와 성공률 우선 평가 비교, 유지율
-  추적, TCPC 직접 비교를 재생성한다.
+- `data/v2/`는 개발 25쌍과 보류 75쌍을 분리하며, 보류 checksum은 고정돼 있다.
+- 본 계획은 B0, 균등 추출, head-tail, schema-oracle, query-aware를 각 150회씩
+  하나의 순서로 섞어 총 750회를 실행한다.
+- `results/v2/heldout-main-2026-09-21.jsonl`은 누락·중복·checksum 불일치 없이
+  완료된 본 실험 원자료다.
+- `scripts/analyze_v2_main.py`는 의미쌍 군집 bootstrap 성공당 비용 CI, Holm 보정,
+  정답 행동 필드 잔존 층화, protocol residual 분포를 재생성한다.
+- schema-oracle과 query-aware는 제안 방법이 아니라 각각 상한과 이론적 비용
+  하한이다. 초기 I-H는 실제 다중 턴 이력이 아니므로 확증 실험에서 제외했다.
+- 개발 B0의 네 라운드와 중단 기록은 `docs/v2-experiment-decisions.md`에 보존한다.
 
 모델 ID, 가격, tokenizer, protocol residual 허용치, realized-ratio 허용 오차는
 모두 고정되어 있다. 계정의 모델 접근 권한과 실제 응답 schema는 크레딧을 받은
 뒤 첫 smoke 호출에서만 최종 확인할 수 있다.
 
 ```bash
-.venv/bin/python scripts/verify_dataset.py
-.venv/bin/python scripts/run_experiment.py preflight
-.venv/bin/python scripts/check_smoke.py results/smoke/RUN.jsonl
-.venv/bin/python scripts/analyze_results.py results/raw/runs.jsonl
-.venv/bin/python scripts/run_experiment.py sweep-smoke --output results/smoke/sweep.jsonl --projected-cost-per-run 0.008
-.venv/bin/python scripts/run_experiment.py sweep-main --output results/raw/sweep.jsonl --projected-cost-per-run 0.008
-.venv/bin/python scripts/run_experiment.py guard-main --output results/raw/guard.jsonl --projected-cost-per-run 0.008
-.venv/bin/python scripts/analyze_followup.py --sweep results/raw/sweep.jsonl --guard results/raw/guard.jsonl
+.venv/bin/python scripts/audit_v2_candidates.py
+.venv/bin/python scripts/run_v2_experiment.py preflight
+.venv/bin/python scripts/run_v2_experiment.py heldout-main \
+  --output results/v2/heldout-main.jsonl --projected-cost-per-run 0.03
+.venv/bin/python scripts/analyze_v2_main.py \
+  results/v2/heldout-main-2026-09-21.jsonl \
+  --output results/v2/heldout-main-summary-2026-09-21.json \
+  --csv results/v2/heldout-method-summary-2026-09-21.csv \
+  --retention-csv results/v2/information-retention-2026-09-21.csv \
+  --residual-csv results/v2/protocol-residual-summary-2026-09-21.csv
 ```
 
-유료 실행은 `run_experiment.py smoke|main --output ...
---projected-cost-per-run ...`처럼 명시해야 한다. 중단된 실행은 같은 명령에
-`--resume`을 붙이면 기존 ordinal과 계획의 일치를 확인한 뒤 이어서 실행한다.
+유료 실행은 `heldout-main`과 출력·예상 비용을 명시해야 한다. 중단된 실행은
+같은 명령에 `--resume`을 붙이면 기존 ordinal과 계획의 일치를 확인한 뒤
+이어간다. v1의 I-H/T-H/TCPC 스크립트와 결과는 탐색적 재현 자료로 남아 있다.
 
 가격 출처: <https://developers.openai.com/api/docs/pricing>
 

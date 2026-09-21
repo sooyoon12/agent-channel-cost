@@ -1,0 +1,30 @@
+{
+  "development": {
+    "event_followup": {
+      "max_notes_token_share": 0.1702127659574468,
+      "mean_notes_token_share": 0.16833070011625367,
+      "min_notes_token_share": 0.16730038022813687,
+      "pairs": 5
+    },
+    "long_observation": {
+      "max_notes_token_share": 0.18167741935483872,
+      "mean_notes_token_share": 0.1797579351510363,
+      "min_notes_token_share": 0.17795753286147623,
+      "pairs": 20
+    }
+  },
+  "held_out_candidate": {
+    "event_followup": {
+      "max_notes_token_share": 0.170873786407767,
+      "mean_notes_token_share": 0.16828859764187476,
+      "min_notes_token_share": 0.1660377358490566,
+      "pairs": 15
+    },
+    "long_observation": {
+      "max_notes_token_share": 0.18276220145379024,
+      "mean_notes_token_share": 0.17928824472921454,
+      "min_notes_token_share": 0.1768399899522733,
+      "pairs": 60
+    }
+  }
+}

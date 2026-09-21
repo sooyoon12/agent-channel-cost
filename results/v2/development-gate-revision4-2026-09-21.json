@@ -1,0 +1,43 @@
+{
+  "accounting_warning_rows": 13,
+  "analysis_invalid_rows": 0,
+  "billed_cost_usd": 0.8129323,
+  "breakdown": {
+    "event_followup:en": {
+      "runs": 5,
+      "success_rate": 1.0,
+      "successes": 5
+    },
+    "event_followup:ko": {
+      "runs": 5,
+      "success_rate": 1.0,
+      "successes": 5
+    },
+    "long_observation:en": {
+      "runs": 20,
+      "success_rate": 0.95,
+      "successes": 19
+    },
+    "long_observation:ko": {
+      "runs": 20,
+      "success_rate": 0.95,
+      "successes": 19
+    }
+  },
+  "duplicates": [],
+  "expected_runs": 50,
+  "missing": [],
+  "preregistered_gate": {
+    "baseline_floor_inclusive": 0.9,
+    "ceiling_threshold_exclusive": 0.99,
+    "unit_note": "descriptive run-level gate; inference clusters by pair_id"
+  },
+  "raw_records_sha256": "3cc0013c6b5a7fbc413c214dd222f2672a9507273e804eecdefade0ea7ade1b3",
+  "reasons": [],
+  "status": "pass",
+  "success_rate": 0.96,
+  "successes": 48,
+  "task_checksum_mismatch_rows": 0,
+  "terminal_runs": 50,
+  "unexpected": []
+}

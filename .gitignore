@@ -10,3 +10,17 @@ __pycache__/
 results/raw/*.jsonl
 results/smoke/*.jsonl
 results/followup/smoke/
+.DS_Store
+tmp/
+output/
+paper/*.aux
+paper/*.bbl
+paper/*.blg
+paper/*.fdb_latexmk
+paper/*.fls
+paper/*.log
+paper/*.out
+paper/*.synctex.gz
+paper/*.toc
+paper/*.docx
+paper/*.pdf

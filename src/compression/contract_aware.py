@@ -72,3 +72,10 @@ class ContractAwareCompressor:
             billed_cost_usd=Decimal(0),
             list_price_cost_usd=Decimal(0),
         )
+
+
+class OracleContractCompressor(ContractAwareCompressor):
+    """V2 label for the schema-oracle upper bound, not a proposed method."""
+
+    name = "oracle_contract"
+    version = "2"

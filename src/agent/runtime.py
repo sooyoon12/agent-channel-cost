@@ -51,6 +51,7 @@ class RuntimeSettings:
     target_ratio: float = 0.4
     residual_absolute_tolerance: int = 8
     residual_fractional_tolerance: float = 0.01
+    residual_upper_bound_is_fatal: bool = True
     shadow_cost_tolerance: Decimal = Decimal("1e-9")
     provider_protocol_reserve_tokens: int = 1024
     allow_non_offline_provider: bool = False
@@ -179,6 +180,7 @@ class AgentRuntime:
         turn_count = 0
         provider_error = False
         accounting_invalid_reason: str | None = None
+        accounting_warning_count = 0
         repeat_blocked = False
         ended_with_final_output = False
         attempted_call_counts: dict[tuple[str, str], int] = {}
@@ -238,7 +240,26 @@ class AgentRuntime:
                 absolute_tolerance=self.settings.residual_absolute_tolerance,
                 fractional_tolerance=self.settings.residual_fractional_tolerance,
             )
-            if not residual.valid:
+            positive_residual_warning = (
+                not residual.valid
+                and residual.residual_tokens >= 0
+                and not self.settings.residual_upper_bound_is_fatal
+            )
+            if positive_residual_warning:
+                accounting_warning_count += 1
+                events.append(
+                    {
+                        "turn": turn_count,
+                        "event_type": "accounting_warning",
+                        "message": residual.reason,
+                        "local_i_tokens": channel_counts.i_tokens,
+                        "local_t_tokens": channel_counts.t_tokens,
+                        "provider_input_tokens": response.usage.input_tokens,
+                        "protocol_residual_tokens": residual.residual_tokens,
+                        "allowed_tokens": residual.allowed_tokens,
+                    }
+                )
+            if not residual.valid and not positive_residual_warning:
                 item_diagnostics = [
                     {
                         "index": index,
@@ -455,6 +476,7 @@ class AgentRuntime:
         record = {
             "run_id": run_id or str(uuid.uuid4()),
             "pair_id": task.pair_id,
+            "task_checksum": task.checksum(),
             "task_id": f"{task.pair_id}-{language}",
             "task_family": task.task_family,
             "sensitivity_group": task.sensitivity_group,
@@ -468,6 +490,8 @@ class AgentRuntime:
             "tokenizer_name": self.tokenizer_name,
             "tokenizer_version": self.tokenizer_version,
             "target_ratio": self.settings.target_ratio,
+            "compression_algorithm": self.compressor.name,
+            "compression_algorithm_version": self.compressor.version,
             "realized_ratio": realized_ratio,
             "success": evaluation.success and shadow.valid,
             "failure_type": evaluation.failure_type,
@@ -500,6 +524,7 @@ class AgentRuntime:
                 "difference": float(shadow.difference),
                 "valid": shadow.valid and accounting_invalid_reason is None,
             },
+            "accounting_warning_count": accounting_warning_count,
             "events": events,
         }
         if evaluation.success and not shadow.valid:

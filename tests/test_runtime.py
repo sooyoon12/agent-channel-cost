@@ -162,6 +162,35 @@ class RuntimeTests(unittest.TestCase):
         self.assertFalse(result.record["shadow"]["valid"])
         self.assertEqual(result.record["events"][-1]["event_type"], "accounting_error")
 
+    def test_positive_protocol_residual_can_be_retained_as_warning(self):
+        task = generate_task_set()[0]
+        tokenizer = UnitCounter()
+        runtime = AgentRuntime(
+            provider=ScriptedProvider(
+                task.expected_tool_calls, tokenizer, protocol_residual_tokens=500
+            ),
+            tokenizer=tokenizer,
+            pricing=PricingSchedule(PriceTier(Decimal("2"), Decimal("0.5"), Decimal("8"))),
+            compressor=FixedRatioCompressor(),
+            settings=RuntimeSettings(
+                model="offline-fixed-model",
+                residual_absolute_tolerance=8,
+                residual_fractional_tolerance=0.01,
+                residual_upper_bound_is_fatal=False,
+            ),
+            tokenizer_name="unit-counter",
+            tokenizer_version="1",
+        )
+        result = runtime.run(
+            task, language="ko", condition=ExperimentCondition.BASELINE, repetition=1
+        )
+        self.assertTrue(result.record["success"])
+        self.assertTrue(result.record["shadow"]["valid"])
+        self.assertGreater(result.record["accounting_warning_count"], 0)
+        self.assertTrue(
+            any(event["event_type"] == "accounting_warning" for event in result.record["events"])
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

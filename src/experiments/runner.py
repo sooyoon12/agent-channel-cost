@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from decimal import Decimal
 import hashlib
 import json
@@ -290,6 +291,8 @@ def execute_plan(
             )
             record = dict(result.record)
             record["plan_ordinal"] = entry.ordinal
+            if hasattr(entry, "method"):
+                record["experiment_method"] = entry.method
             record["provider_attempt"] = attempt + 1
             record["analysis_valid"] = record.get("failure_type") not in {
                 "provider_error",
@@ -313,3 +316,85 @@ def execute_plan(
             records.append(record)
             break
     return tuple(records)
+
+
+def execute_plan_concurrent(
+    plan: Iterable[RunPlanEntry],
+    tasks: Sequence[SemanticTask],
+    *,
+    runtime_factory: Callable[[SemanticTask, RunPlanEntry], AgentRuntime],
+    logger: JsonlRunLogger,
+    workers: int,
+    provider_error_retries: int = 1,
+    budget_guard: BudgetGuard | None = None,
+    projected_cost_per_run_usd: Decimal | None = None,
+    starting_cost_usd: Decimal = Decimal("0"),
+) -> tuple[Mapping[str, object], ...]:
+    """Execute independent runs concurrently; logging remains serialized."""
+
+    entries = tuple(plan)
+    if not 2 <= workers <= 8:
+        raise ValueError("concurrent workers must be between 2 and 8")
+    if provider_error_retries < 0:
+        raise ValueError("provider_error_retries cannot be negative")
+    if budget_guard is not None:
+        if projected_cost_per_run_usd is None:
+            raise ValueError("budgeted execution requires projected_cost_per_run_usd")
+        status = budget_guard.check(
+            starting_cost_usd,
+            projected_cost_per_run_usd * len(entries),
+        )
+        if not status.allowed:
+            raise RuntimeError(status.reason)
+    by_id = {task.pair_id: task for task in tasks}
+
+    def execute_entry(entry):
+        attempts = []
+        for attempt in range(provider_error_retries + 1):
+            runtime = runtime_factory(by_id[entry.pair_id], entry)
+            result = runtime.run(
+                by_id[entry.pair_id],
+                language=entry.language,
+                condition=entry.condition,
+                repetition=entry.repetition,
+            )
+            record = dict(result.record)
+            record["plan_ordinal"] = entry.ordinal
+            if hasattr(entry, "method"):
+                record["experiment_method"] = entry.method
+            record["provider_attempt"] = attempt + 1
+            record["analysis_valid"] = record.get("failure_type") not in {
+                "provider_error",
+                "accounting_invalid",
+            }
+            attempts.append(record)
+            if (
+                record["failure_type"] == "provider_error"
+                and provider_error_is_retryable(record)
+                and attempt < provider_error_retries
+            ):
+                continue
+            return attempts
+        return attempts
+
+    terminal_records: list[Mapping[str, object]] = []
+    cumulative = starting_cost_usd
+    with ThreadPoolExecutor(max_workers=workers, thread_name_prefix="v2-run") as pool:
+        futures = {pool.submit(execute_entry, entry): entry for entry in entries}
+        for future in as_completed(futures):
+            attempts = future.result()
+            for record in attempts:
+                logger.append(record)
+                cumulative += Decimal(str(record["model_cost_usd"]["billed"])) + Decimal(
+                    str(record["compressor_cost_usd"]["billed"])
+                )
+            terminal = attempts[-1]
+            if terminal["failure_type"] == "provider_error":
+                raise RuntimeError(
+                    f"provider failed after {len(attempts)} attempt(s) at plan ordinal "
+                    f"{terminal['plan_ordinal']}"
+                )
+            terminal_records.append(terminal)
+    if budget_guard is not None and cumulative > budget_guard.limit_usd:
+        raise RuntimeError("actual cumulative cost exceeded the approved support limit")
+    return tuple(sorted(terminal_records, key=lambda record: int(record["plan_ordinal"])))

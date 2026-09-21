@@ -1,0 +1,11 @@
+dataset_version: ksc2026-v2-th
+development_order_seed: 20260921
+heldout_order_seed: 20261001
+target_ratio: 0.8
+baseline_floor: 0.90
+ceiling_threshold: 0.99
+development_budget_usd: 5.00
+heldout_budget_usd: 25.00
+confirmatory_channel: T-H
+i_h_in_scope: false
+oracle_label: schema_oracle_upper_bound

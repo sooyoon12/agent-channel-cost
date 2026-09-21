@@ -1,0 +1,725 @@
+{
+  "analysis_invalid_rows": 0,
+  "duplicate_key_count": 0,
+  "expected_terminal_runs": 750,
+  "inference": {
+    "bootstrap_replicates": 10000,
+    "bootstrap_seed": 20261001,
+    "bootstrap_unit": "pair_id",
+    "paired_binary_test": "exact two-sided McNemar by language and strict bilingual pair; no pooled-language independence assumption"
+  },
+  "information_retention": {
+    "head_tail": {
+      "definition": "gold item and all action/decision fields remain exact",
+      "mcnemar_vs_b0_among_retained_by_language": {
+        "en": {
+          "b0_failure_method_success": 1,
+          "b0_success_method_failure": 2,
+          "exact_two_sided_p": 1.0,
+          "pairs": 59
+        },
+        "ko": {
+          "b0_failure_method_success": 1,
+          "b0_success_method_failure": 3,
+          "exact_two_sided_p": 0.625,
+          "pairs": 59
+        }
+      },
+      "removed_pairs": 16,
+      "retained_pairs": 59,
+      "strata": {
+        "all:removed": {
+          "runs": 32,
+          "success_rate": 0.0,
+          "successes": 0
+        },
+        "all:retained": {
+          "runs": 118,
+          "success_rate": 0.940677966101695,
+          "successes": 111
+        },
+        "event_followup:removed": {
+          "runs": 2,
+          "success_rate": 0.0,
+          "successes": 0
+        },
+        "event_followup:retained": {
+          "runs": 28,
+          "success_rate": 1.0,
+          "successes": 28
+        },
+        "long_observation:removed": {
+          "runs": 30,
+          "success_rate": 0.0,
+          "successes": 0
+        },
+        "long_observation:retained": {
+          "runs": 90,
+          "success_rate": 0.9222222222222223,
+          "successes": 83
+        }
+      }
+    },
+    "uniform": {
+      "definition": "gold item and all action/decision fields remain exact",
+      "mcnemar_vs_b0_among_retained_by_language": {
+        "en": {
+          "b0_failure_method_success": 2,
+          "b0_success_method_failure": 0,
+          "exact_two_sided_p": 0.5,
+          "pairs": 61
+        },
+        "ko": {
+          "b0_failure_method_success": 2,
+          "b0_success_method_failure": 0,
+          "exact_two_sided_p": 0.5,
+          "pairs": 61
+        }
+      },
+      "removed_pairs": 14,
+      "retained_pairs": 61,
+      "strata": {
+        "all:removed": {
+          "runs": 28,
+          "success_rate": 0.0,
+          "successes": 0
+        },
+        "all:retained": {
+          "runs": 122,
+          "success_rate": 1.0,
+          "successes": 122
+        },
+        "event_followup:removed": {
+          "runs": 10,
+          "success_rate": 0.0,
+          "successes": 0
+        },
+        "event_followup:retained": {
+          "runs": 20,
+          "success_rate": 1.0,
+          "successes": 20
+        },
+        "long_observation:removed": {
+          "runs": 18,
+          "success_rate": 0.0,
+          "successes": 0
+        },
+        "long_observation:retained": {
+          "runs": 102,
+          "success_rate": 1.0,
+          "successes": 102
+        }
+      }
+    }
+  },
+  "methods": {
+    "b0": {
+      "accounting_warning_rows": 29,
+      "billed_cost_per_success_usd": 0.01660546164383562,
+      "billed_cost_usd": 2.4243974,
+      "breakdown": {
+        "event_followup:en": {
+          "runs": 15,
+          "success_rate": 1.0,
+          "successes": 15
+        },
+        "event_followup:ko": {
+          "runs": 15,
+          "success_rate": 1.0,
+          "successes": 15
+        },
+        "long_observation:en": {
+          "runs": 60,
+          "success_rate": 0.9666666666666667,
+          "successes": 58
+        },
+        "long_observation:ko": {
+          "runs": 60,
+          "success_rate": 0.9666666666666667,
+          "successes": 58
+        }
+      },
+      "failure_types": {
+        "argument_error": 4
+      },
+      "list_price_cost_per_success_pair_clustered_95ci_usd": [
+        0.01988300308219178,
+        0.023586612671232878
+      ],
+      "list_price_cost_per_success_usd": 0.0217996301369863,
+      "list_price_cost_usd": 3.182746,
+      "mean_billed_cost_per_run_usd": 0.016162649333333334,
+      "mean_list_price_cost_per_run_usd": 0.021218306666666666,
+      "mean_local_t_input_tokens": 7943.02,
+      "mean_provider_input_tokens": 9215.833333333334,
+      "mean_realized_ratio": 1.0,
+      "runs": 150,
+      "success_rate": 0.9733333333333334,
+      "successes": 146
+    },
+    "head_tail": {
+      "accounting_warning_rows": 41,
+      "billed_cost_per_success_usd": 0.023847362162162163,
+      "billed_cost_usd": 2.6470572,
+      "breakdown": {
+        "event_followup:en": {
+          "runs": 15,
+          "success_rate": 0.9333333333333333,
+          "successes": 14
+        },
+        "event_followup:ko": {
+          "runs": 15,
+          "success_rate": 0.9333333333333333,
+          "successes": 14
+        },
+        "long_observation:en": {
+          "runs": 60,
+          "success_rate": 0.7,
+          "successes": 42
+        },
+        "long_observation:ko": {
+          "runs": 60,
+          "success_rate": 0.6833333333333333,
+          "successes": 41
+        }
+      },
+      "failure_types": {
+        "argument_error": 39
+      },
+      "list_price_cost_per_success_pair_clustered_95ci_usd": [
+        0.024220628761237442,
+        0.037689470287878786
+      ],
+      "list_price_cost_per_success_usd": 0.030169873873873876,
+      "list_price_cost_usd": 3.348856,
+      "mean_billed_cost_per_run_usd": 0.017647048,
+      "mean_list_price_cost_per_run_usd": 0.022325706666666667,
+      "mean_local_t_input_tokens": 7280.18,
+      "mean_provider_input_tokens": 8686.093333333334,
+      "mean_realized_ratio": 0.7889880349453215,
+      "runs": 150,
+      "success_rate": 0.74,
+      "successes": 111
+    },
+    "oracle_contract": {
+      "accounting_warning_rows": 19,
+      "billed_cost_per_success_usd": 0.014327841216216216,
+      "billed_cost_usd": 2.1205205,
+      "breakdown": {
+        "event_followup:en": {
+          "runs": 15,
+          "success_rate": 1.0,
+          "successes": 15
+        },
+        "event_followup:ko": {
+          "runs": 15,
+          "success_rate": 1.0,
+          "successes": 15
+        },
+        "long_observation:en": {
+          "runs": 60,
+          "success_rate": 0.9833333333333333,
+          "successes": 59
+        },
+        "long_observation:ko": {
+          "runs": 60,
+          "success_rate": 0.9833333333333333,
+          "successes": 59
+        }
+      },
+      "failure_types": {
+        "argument_error": 2
+      },
+      "list_price_cost_per_success_pair_clustered_95ci_usd": [
+        0.017357592281879195,
+        0.020445287126436784
+      ],
+      "list_price_cost_per_success_usd": 0.01895997297297297,
+      "list_price_cost_usd": 2.806076,
+      "mean_billed_cost_per_run_usd": 0.014136803333333333,
+      "mean_list_price_cost_per_run_usd": 0.018707173333333334,
+      "mean_local_t_input_tokens": 6856.526666666667,
+      "mean_provider_input_tokens": 8115.1466666666665,
+      "mean_realized_ratio": 0.8525610914817546,
+      "runs": 150,
+      "success_rate": 0.9866666666666667,
+      "successes": 148
+    },
+    "query_aware_filter": {
+      "accounting_warning_rows": 0,
+      "billed_cost_per_success_usd": 0.004240160000000001,
+      "billed_cost_usd": 0.636024,
+      "breakdown": {
+        "event_followup:en": {
+          "runs": 15,
+          "success_rate": 1.0,
+          "successes": 15
+        },
+        "event_followup:ko": {
+          "runs": 15,
+          "success_rate": 1.0,
+          "successes": 15
+        },
+        "long_observation:en": {
+          "runs": 60,
+          "success_rate": 1.0,
+          "successes": 60
+        },
+        "long_observation:ko": {
+          "runs": 60,
+          "success_rate": 1.0,
+          "successes": 60
+        }
+      },
+      "failure_types": {},
+      "list_price_cost_per_success_pair_clustered_95ci_usd": [
+        0.004186866,
+        0.0042966666666666665
+      ],
+      "list_price_cost_per_success_usd": 0.004240160000000001,
+      "list_price_cost_usd": 0.636024,
+      "mean_billed_cost_per_run_usd": 0.004240160000000001,
+      "mean_list_price_cost_per_run_usd": 0.004240160000000001,
+      "mean_local_t_input_tokens": 214.86666666666667,
+      "mean_provider_input_tokens": 1399.12,
+      "mean_realized_ratio": 0.051823403245495434,
+      "runs": 150,
+      "success_rate": 1.0,
+      "successes": 150
+    },
+    "uniform": {
+      "accounting_warning_rows": 9,
+      "billed_cost_per_success_usd": 0.01729409836065574,
+      "billed_cost_usd": 2.10988,
+      "breakdown": {
+        "event_followup:en": {
+          "runs": 15,
+          "success_rate": 0.6666666666666666,
+          "successes": 10
+        },
+        "event_followup:ko": {
+          "runs": 15,
+          "success_rate": 0.6666666666666666,
+          "successes": 10
+        },
+        "long_observation:en": {
+          "runs": 60,
+          "success_rate": 0.85,
+          "successes": 51
+        },
+        "long_observation:ko": {
+          "runs": 60,
+          "success_rate": 0.85,
+          "successes": 51
+        }
+      },
+      "failure_types": {
+        "argument_error": 27,
+        "max_turn/budget": 1
+      },
+      "list_price_cost_per_success_pair_clustered_95ci_usd": [
+        0.019360660110294116,
+        0.02498997628968254
+      ],
+      "list_price_cost_per_success_usd": 0.02192139344262295,
+      "list_price_cost_usd": 2.67441,
+      "mean_billed_cost_per_run_usd": 0.014065866666666666,
+      "mean_list_price_cost_per_run_usd": 0.0178294,
+      "mean_local_t_input_tokens": 6071.8,
+      "mean_provider_input_tokens": 7311.78,
+      "mean_realized_ratio": 0.7890887680888173,
+      "runs": 150,
+      "success_rate": 0.8133333333333334,
+      "successes": 122
+    }
+  },
+  "missing_count": 0,
+  "multiplicity": {
+    "family": [
+      "uniform",
+      "head_tail",
+      "query_aware_filter",
+      "oracle_contract"
+    ],
+    "family_size": 4,
+    "method": "Holm family-wise adjustment",
+    "status": "specified after held-out result review; treat adjusted p-values as descriptive"
+  },
+  "paired_comparisons_vs_b0": {
+    "head_tail": {
+      "cost_delta_pair_clustered_95ci_usd": [
+        7.392918333333318e-05,
+        0.002998819133333333
+      ],
+      "list_price_cost_delta_pair_clustered_95ci_usd_primary": [
+        -0.0004441686666666668,
+        0.002799419
+      ],
+      "list_price_cost_per_success_change_pair_clustered_95ci_percent": [
+        15.161397868874747,
+        69.59257595672828
+      ],
+      "list_price_cost_per_success_change_vs_b0_percent": 38.39626491041339,
+      "list_price_cost_per_success_delta_pair_clustered_95ci_usd": [
+        0.003336113344480567,
+        0.015241201955244374
+      ],
+      "list_price_cost_per_success_delta_vs_b0_usd": 0.008370243736887575,
+      "list_price_cost_per_success_pair_clustered_95ci_usd": [
+        0.02437533518360656,
+        0.03778615105042017
+      ],
+      "list_price_cost_per_success_usd": 0.030169873873873876,
+      "mcnemar_exact_by_language": {
+        "en": {
+          "b0_failure_method_success": 1,
+          "b0_success_method_failure": 18,
+          "exact_two_sided_p": 7.62939453125e-05,
+          "pairs": 75
+        },
+        "ko": {
+          "b0_failure_method_success": 1,
+          "b0_success_method_failure": 19,
+          "exact_two_sided_p": 4.00543212890625e-05,
+          "pairs": 75
+        }
+      },
+      "mcnemar_exact_strict_bilingual_pair": {
+        "b0_failure_method_success": 1,
+        "b0_success_method_failure": 21,
+        "definition": "success requires both Korean and English surfaces",
+        "exact_two_sided_p": 1.0967254638671875e-05,
+        "pairs": 75
+      },
+      "mcnemar_strict_pair_holm_adjusted_p": 4.38690185546875e-05,
+      "mean_billed_cost_delta_per_run_usd": 0.0014843986666666666,
+      "mean_list_price_cost_delta_per_run_usd_primary": 0.0011074000000000001,
+      "paired_runs": 150,
+      "success_delta_pair_clustered_95ci_percentage_points": [
+        -33.33333333333333,
+        -14.000000000000002
+      ],
+      "success_delta_percentage_points": -23.333333333333332
+    },
+    "oracle_contract": {
+      "cost_delta_pair_clustered_95ci_usd": [
+        -0.0022521024333333334,
+        -0.00180223815
+      ],
+      "list_price_cost_delta_pair_clustered_95ci_usd_primary": [
+        -0.0029126146666666663,
+        -0.002087613333333334
+      ],
+      "list_price_cost_per_success_change_pair_clustered_95ci_percent": [
+        -15.107993070004564,
+        -11.39997519955563
+      ],
+      "list_price_cost_per_success_change_vs_b0_percent": -13.02617129817919,
+      "list_price_cost_per_success_delta_pair_clustered_95ci_usd": [
+        -0.003453713475590784,
+        -0.002355423721839287
+      ],
+      "list_price_cost_per_success_delta_vs_b0_usd": -0.0028396571640133296,
+      "list_price_cost_per_success_pair_clustered_95ci_usd": [
+        0.01739745099986303,
+        0.020454506800766284
+      ],
+      "list_price_cost_per_success_usd": 0.01895997297297297,
+      "mcnemar_exact_by_language": {
+        "en": {
+          "b0_failure_method_success": 2,
+          "b0_success_method_failure": 1,
+          "exact_two_sided_p": 1.0,
+          "pairs": 75
+        },
+        "ko": {
+          "b0_failure_method_success": 1,
+          "b0_success_method_failure": 0,
+          "exact_two_sided_p": 1.0,
+          "pairs": 75
+        }
+      },
+      "mcnemar_exact_strict_bilingual_pair": {
+        "b0_failure_method_success": 2,
+        "b0_success_method_failure": 1,
+        "definition": "success requires both Korean and English surfaces",
+        "exact_two_sided_p": 1.0,
+        "pairs": 75
+      },
+      "mcnemar_strict_pair_holm_adjusted_p": 1.0,
+      "mean_billed_cost_delta_per_run_usd": -0.002025846,
+      "mean_list_price_cost_delta_per_run_usd_primary": -0.002511133333333333,
+      "paired_runs": 150,
+      "success_delta_pair_clustered_95ci_percentage_points": [
+        -1.3333333333333335,
+        4.666666666666667
+      ],
+      "success_delta_percentage_points": 1.3333333333333335
+    },
+    "query_aware_filter": {
+      "cost_delta_pair_clustered_95ci_usd": [
+        -0.013027948583333332,
+        -0.010735538916666667
+      ],
+      "list_price_cost_delta_pair_clustered_95ci_usd_primary": [
+        -0.018673939666666667,
+        -0.015145486666666668
+      ],
+      "list_price_cost_per_success_change_pair_clustered_95ci_percent": [
+        -82.22839035501983,
+        -78.43624185959014
+      ],
+      "list_price_cost_per_success_change_vs_b0_percent": -80.54939476791425,
+      "list_price_cost_per_success_delta_pair_clustered_95ci_usd": [
+        -0.01942988046596244,
+        -0.01552764994015444
+      ],
+      "list_price_cost_per_success_delta_vs_b0_usd": -0.0175594701369863,
+      "list_price_cost_per_success_pair_clustered_95ci_usd": [
+        0.004186865666666666,
+        0.004296214333333333
+      ],
+      "list_price_cost_per_success_usd": 0.004240160000000001,
+      "mcnemar_exact_by_language": {
+        "en": {
+          "b0_failure_method_success": 2,
+          "b0_success_method_failure": 0,
+          "exact_two_sided_p": 0.5,
+          "pairs": 75
+        },
+        "ko": {
+          "b0_failure_method_success": 2,
+          "b0_success_method_failure": 0,
+          "exact_two_sided_p": 0.5,
+          "pairs": 75
+        }
+      },
+      "mcnemar_exact_strict_bilingual_pair": {
+        "b0_failure_method_success": 3,
+        "b0_success_method_failure": 0,
+        "definition": "success requires both Korean and English surfaces",
+        "exact_two_sided_p": 0.25,
+        "pairs": 75
+      },
+      "mcnemar_strict_pair_holm_adjusted_p": 0.5,
+      "mean_billed_cost_delta_per_run_usd": -0.011922489333333333,
+      "mean_list_price_cost_delta_per_run_usd_primary": -0.016978146666666666,
+      "paired_runs": 150,
+      "success_delta_pair_clustered_95ci_percentage_points": [
+        0.0,
+        6.0
+      ],
+      "success_delta_percentage_points": 2.666666666666667
+    },
+    "uniform": {
+      "cost_delta_pair_clustered_95ci_usd": [
+        -0.00272608,
+        -0.0013808055833333336
+      ],
+      "list_price_cost_delta_pair_clustered_95ci_usd_primary": [
+        -0.004154861333333333,
+        -0.0025522853333333336
+      ],
+      "list_price_cost_per_success_change_pair_clustered_95ci_percent": [
+        -10.6982002347103,
+        15.531395246636457
+      ],
+      "list_price_cost_per_success_change_vs_b0_percent": 0.5585567501444011,
+      "list_price_cost_per_success_delta_pair_clustered_95ci_usd": [
+        -0.0023661391858237537,
+        0.0032804399799457864
+      ],
+      "list_price_cost_per_success_delta_vs_b0_usd": 0.00012176330563664836,
+      "list_price_cost_per_success_pair_clustered_95ci_usd": [
+        0.019386440234375003,
+        0.025109926542207794
+      ],
+      "list_price_cost_per_success_usd": 0.02192139344262295,
+      "mcnemar_exact_by_language": {
+        "en": {
+          "b0_failure_method_success": 2,
+          "b0_success_method_failure": 14,
+          "exact_two_sided_p": 0.004180908203125,
+          "pairs": 75
+        },
+        "ko": {
+          "b0_failure_method_success": 2,
+          "b0_success_method_failure": 14,
+          "exact_two_sided_p": 0.004180908203125,
+          "pairs": 75
+        }
+      },
+      "mcnemar_exact_strict_bilingual_pair": {
+        "b0_failure_method_success": 3,
+        "b0_success_method_failure": 14,
+        "definition": "success requires both Korean and English surfaces",
+        "exact_two_sided_p": 0.012725830078125,
+        "pairs": 75
+      },
+      "mcnemar_strict_pair_holm_adjusted_p": 0.038177490234375,
+      "mean_billed_cost_delta_per_run_usd": -0.0020967826666666665,
+      "mean_list_price_cost_delta_per_run_usd_primary": -0.003388906666666667,
+      "paired_runs": 150,
+      "success_delta_pair_clustered_95ci_percentage_points": [
+        -26.0,
+        -6.666666666666667
+      ],
+      "success_delta_percentage_points": -16.0
+    }
+  },
+  "protocol_residual_distribution": {
+    "b0": {
+      "aggregate_run_residual_fraction": {
+        "max": 0.07547956630525438,
+        "median": 0.024795920618526826,
+        "n": 150,
+        "p95": 0.05831116665049717
+      },
+      "aggregate_run_residual_tokens": {
+        "max": 593.0,
+        "median": 169.5,
+        "n": 150,
+        "p95": 463.24999999999943
+      },
+      "runs": 150,
+      "warning_request_residual_fraction": {
+        "max": 0.09223048970410105,
+        "median": 0.06455026455026455,
+        "n": 29,
+        "p95": 0.08137723804651821
+      },
+      "warning_request_residual_tokens": {
+        "max": 533.0,
+        "median": 366.0,
+        "n": 29,
+        "p95": 469.9999999999999
+      },
+      "warning_requests": 29,
+      "warning_runs": 29
+    },
+    "head_tail": {
+      "aggregate_run_residual_fraction": {
+        "max": 0.11733121209108084,
+        "median": 0.031477096351944414,
+        "n": 150,
+        "p95": 0.08491628332663548
+      },
+      "aggregate_run_residual_tokens": {
+        "max": 2319.0,
+        "median": 183.5,
+        "n": 150,
+        "p95": 1144.75
+      },
+      "runs": 150,
+      "warning_request_residual_fraction": {
+        "max": 0.20690929244411602,
+        "median": 0.08309200267320116,
+        "n": 47,
+        "p95": 0.19419556413869912
+      },
+      "warning_request_residual_tokens": {
+        "max": 1206.0,
+        "median": 619.0,
+        "n": 47,
+        "p95": 1120.0
+      },
+      "warning_requests": 47,
+      "warning_runs": 41
+    },
+    "oracle_contract": {
+      "aggregate_run_residual_fraction": {
+        "max": 0.07940228537943159,
+        "median": 0.02452843220346602,
+        "n": 150,
+        "p95": 0.06674773268480516
+      },
+      "aggregate_run_residual_tokens": {
+        "max": 813.0,
+        "median": 167.0,
+        "n": 150,
+        "p95": 380.69999999999976
+      },
+      "runs": 150,
+      "warning_request_residual_fraction": {
+        "max": 0.14111694152923537,
+        "median": 0.0639297385620915,
+        "n": 19,
+        "p95": 0.09556204599029637
+      },
+      "warning_request_residual_tokens": {
+        "max": 753.0,
+        "median": 311.0,
+        "n": 19,
+        "p95": 491.99999999999943
+      },
+      "warning_requests": 19,
+      "warning_runs": 19
+    },
+    "query_aware_filter": {
+      "aggregate_run_residual_fraction": {
+        "max": 0.12805280528052806,
+        "median": 0.09283276450511946,
+        "n": 150,
+        "p95": 0.0986634934130121
+      },
+      "aggregate_run_residual_tokens": {
+        "max": 194.0,
+        "median": 128.0,
+        "n": 150,
+        "p95": 138.0
+      },
+      "runs": 150,
+      "warning_request_residual_fraction": {
+        "max": null,
+        "median": null,
+        "n": 0,
+        "p95": null
+      },
+      "warning_request_residual_tokens": {
+        "max": null,
+        "median": null,
+        "n": 0,
+        "p95": null
+      },
+      "warning_requests": 0,
+      "warning_runs": 0
+    },
+    "uniform": {
+      "aggregate_run_residual_fraction": {
+        "max": 0.23856995531110348,
+        "median": 0.022003714496217023,
+        "n": 150,
+        "p95": 0.0778258301288676
+      },
+      "aggregate_run_residual_tokens": {
+        "max": 2082.0,
+        "median": 158.0,
+        "n": 150,
+        "p95": 333.7499999999999
+      },
+      "runs": 150,
+      "warning_request_residual_fraction": {
+        "max": 0.32667554371948515,
+        "median": 0.2107645875251509,
+        "n": 13,
+        "p95": 0.30205650263826267
+      },
+      "warning_request_residual_tokens": {
+        "max": 865.0,
+        "median": 469.0,
+        "n": 13,
+        "p95": 787.5999999999998
+      },
+      "warning_requests": 13,
+      "warning_runs": 9
+    }
+  },
+  "raw_attempt_rows": 750,
+  "reasons": [],
+  "status": "complete",
+  "task_checksum_mismatch_rows": 0,
+  "terminal_runs": 750,
+  "total_billed_cost_usd": 9.9378791,
+  "total_list_price_cost_usd": 12.648112,
+  "unexpected_count": 0
+}
