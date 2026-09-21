@@ -52,7 +52,8 @@
             "mean_turn_count": 0.0
           },
           "failures": 0,
-          "one_sided_95_upper_failure_rate_if_zero_failures": 0.10146573557272476,
+          "independent_units": 14,
+          "one_sided_95_upper_failure_rate_if_zero_failures": 0.19263617565013536,
           "pair_count": 14,
           "remaining_distractors": 5,
           "runs": 28,
@@ -85,6 +86,7 @@
             "mean_turn_count": 0.09999999999999964
           },
           "failures": 7,
+          "independent_units": 45,
           "one_sided_95_upper_failure_rate_if_zero_failures": null,
           "pair_count": 45,
           "remaining_distractors": 50,
@@ -121,6 +123,7 @@
             "mean_turn_count": -0.15625
           },
           "failures": 32,
+          "independent_units": 16,
           "one_sided_95_upper_failure_rate_if_zero_failures": null,
           "runs": 32,
           "success_rate": 0.0,
@@ -152,6 +155,7 @@
             "mean_turn_count": 0.07627118644067776
           },
           "failures": 7,
+          "independent_units": 59,
           "one_sided_95_upper_failure_rate_if_zero_failures": null,
           "runs": 118,
           "success_rate": 0.940677966101695,
@@ -183,6 +187,7 @@
             "mean_turn_count": -1.0
           },
           "failures": 2,
+          "independent_units": 1,
           "one_sided_95_upper_failure_rate_if_zero_failures": null,
           "runs": 2,
           "success_rate": 0.0,
@@ -214,7 +219,8 @@
             "mean_turn_count": 0.0
           },
           "failures": 0,
-          "one_sided_95_upper_failure_rate_if_zero_failures": 0.10146573557272476,
+          "independent_units": 14,
+          "one_sided_95_upper_failure_rate_if_zero_failures": 0.19263617565013536,
           "runs": 28,
           "success_rate": 1.0,
           "success_rate_delta_vs_b0_percentage_points": 0.0,
@@ -245,6 +251,7 @@
             "mean_turn_count": -0.10000000000000009
           },
           "failures": 30,
+          "independent_units": 15,
           "one_sided_95_upper_failure_rate_if_zero_failures": null,
           "runs": 30,
           "success_rate": 0.0,
@@ -276,6 +283,7 @@
             "mean_turn_count": 0.09999999999999964
           },
           "failures": 7,
+          "independent_units": 45,
           "one_sided_95_upper_failure_rate_if_zero_failures": null,
           "runs": 90,
           "success_rate": 0.9222222222222223,
@@ -327,7 +335,8 @@
             "mean_turn_count": 0.0
           },
           "failures": 0,
-          "one_sided_95_upper_failure_rate_if_zero_failures": 0.13910834066826516,
+          "independent_units": 10,
+          "one_sided_95_upper_failure_rate_if_zero_failures": 0.2588655508930523,
           "pair_count": 10,
           "remaining_distractors": 5,
           "runs": 20,
@@ -360,7 +369,8 @@
             "mean_turn_count": 0.039215686274509665
           },
           "failures": 0,
-          "one_sided_95_upper_failure_rate_if_zero_failures": 0.028942819582926327,
+          "independent_units": 51,
+          "one_sided_95_upper_failure_rate_if_zero_failures": 0.0570479523604428,
           "pair_count": 51,
           "remaining_distractors": 50,
           "runs": 102,
@@ -396,6 +406,7 @@
             "mean_turn_count": -0.5
           },
           "failures": 28,
+          "independent_units": 14,
           "one_sided_95_upper_failure_rate_if_zero_failures": null,
           "runs": 28,
           "success_rate": 0.0,
@@ -427,7 +438,8 @@
             "mean_turn_count": 0.032786885245901676
           },
           "failures": 0,
-          "one_sided_95_upper_failure_rate_if_zero_failures": 0.024256156620297897,
+          "independent_units": 61,
+          "one_sided_95_upper_failure_rate_if_zero_failures": 0.04792395210660738,
           "runs": 122,
           "success_rate": 1.0,
           "success_rate_delta_vs_b0_percentage_points": 3.2786885245901676,
@@ -458,6 +470,7 @@
             "mean_turn_count": 0.10000000000000009
           },
           "failures": 10,
+          "independent_units": 5,
           "one_sided_95_upper_failure_rate_if_zero_failures": null,
           "runs": 10,
           "success_rate": 0.0,
@@ -489,7 +502,8 @@
             "mean_turn_count": 0.0
           },
           "failures": 0,
-          "one_sided_95_upper_failure_rate_if_zero_failures": 0.13910834066826516,
+          "independent_units": 10,
+          "one_sided_95_upper_failure_rate_if_zero_failures": 0.2588655508930523,
           "runs": 20,
           "success_rate": 1.0,
           "success_rate_delta_vs_b0_percentage_points": 0.0,
@@ -520,6 +534,7 @@
             "mean_turn_count": -0.8333333333333335
           },
           "failures": 18,
+          "independent_units": 9,
           "one_sided_95_upper_failure_rate_if_zero_failures": null,
           "runs": 18,
           "success_rate": 0.0,
@@ -551,7 +566,8 @@
             "mean_turn_count": 0.039215686274509665
           },
           "failures": 0,
-          "one_sided_95_upper_failure_rate_if_zero_failures": 0.028942819582926327,
+          "independent_units": 51,
+          "one_sided_95_upper_failure_rate_if_zero_failures": 0.0570479523604428,
           "runs": 102,
           "success_rate": 1.0,
           "success_rate_delta_vs_b0_percentage_points": 3.9215686274509776,
