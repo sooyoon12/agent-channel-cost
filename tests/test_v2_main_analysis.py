@@ -1,6 +1,6 @@
 import unittest
 
-from src.analysis.v2_main import information_retention_report, summarize_v2_main
+from src.analysis.v2_main import _retention_stratum_summary, information_retention_report, summarize_v2_main
 from src.experiments.v2 import V2_METHODS
 from src.tasks.v2 import generate_v2_candidates, split_v2_candidates
 
@@ -82,6 +82,16 @@ class V2MainAnalysisTests(unittest.TestCase):
         self.assertEqual(uniform_retained["failures"], 0)
         self.assertIsNotNone(
             uniform_retained["one_sided_95_upper_failure_rate_if_zero_failures"]
+        )
+    def test_zero_failure_upper_bound_uses_pairs_not_runs(self):      # ← 여기서부터 추가
+        rows = [
+            {"pair_id": f"p{i}", "language": lang, "success": True}
+            for i in range(10) for lang in ("ko", "en")
+        ]
+        result = _retention_stratum_summary(rows, rows)
+        self.assertAlmostEqual(
+            result["one_sided_95_upper_failure_rate_if_zero_failures"],
+            1 - 0.05 ** (1 / 10),
         )
 
 

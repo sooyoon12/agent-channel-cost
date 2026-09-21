@@ -117,6 +117,7 @@ def _retention_stratum_summary(
 ) -> dict[str, Any]:
     successes = sum(bool(row["success"]) for row in rows)
     failures = len(rows) - successes
+    independent_units = len({row["pair_id"] for row in rows})
     baseline_successes = sum(bool(row["success"]) for row in baseline_rows)
 
     def behavior(values: Sequence[Mapping[str, Any]]) -> dict[str, float | None]:
@@ -160,6 +161,7 @@ def _retention_stratum_summary(
         "runs": len(rows),
         "successes": successes,
         "failures": failures,
+        "independent_units": independent_units,
         "success_rate": successes / len(rows) if rows else None,
         "b0_same_pairs_successes": baseline_successes,
         "b0_same_pairs_success_rate": (
@@ -172,7 +174,7 @@ def _retention_stratum_summary(
             if rows and baseline_rows else None
         ),
         "one_sided_95_upper_failure_rate_if_zero_failures": (
-            1 - 0.05 ** (1 / len(rows)) if rows and failures == 0 else None
+            1 - 0.05 ** (1 / independent_units) if independent_units and failures == 0 else None
         ),
         "behavior": current_behavior,
         "b0_same_pairs_behavior": baseline_behavior,
