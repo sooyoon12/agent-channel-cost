@@ -1,0 +1,206 @@
+{
+  "baseline_drift_diagnostic": {
+    "concurrent_b0_repeat": {
+      "list_price_cost_per_success_usd": 0.02192350684931507,
+      "mean_list_price_cost_per_run_usd": 0.02133888,
+      "mean_provider_input_tokens": 9225.6,
+      "mean_provider_output_tokens": 240.64,
+      "runs": 150,
+      "success_rate": 0.9733333333333334,
+      "successes": 146
+    },
+    "historical_b0": {
+      "list_price_cost_per_success_usd": 0.0217996301369863,
+      "mean_list_price_cost_per_run_usd": 0.021218306666666666,
+      "mean_provider_input_tokens": 9215.833333333334,
+      "mean_provider_output_tokens": 232.22,
+      "runs": 150,
+      "success_rate": 0.9733333333333334,
+      "successes": 146
+    },
+    "interpretation": "Concurrent B0 is primary; historical B0 is drift diagnosis only.",
+    "mean_cost_per_run_change_percent": 0.5682514407370443,
+    "success_rate_change_percentage_points": 0.0
+  },
+  "baseline_language_token_ratios": {
+    "local_i_input": {
+      "ko_over_en_mean": 1.0531610667790146,
+      "ko_over_en_median": 1.034548944337812
+    },
+    "local_t_input": {
+      "ko_over_en_mean": 1.026843310441046,
+      "ko_over_en_median": 1.0
+    },
+    "provider_input": {
+      "ko_over_en_mean": 1.032327952299253,
+      "ko_over_en_median": 1.0048508145707487
+    }
+  },
+  "baseline_source_runs": 150,
+  "cells": {
+    "head_tail@0.6": {
+      "analysis_invalid_rows": 0,
+      "cost_per_success_change_pair_clustered_95ci_percent": [
+        49.84971690060712,
+        180.18657732414644
+      ],
+      "cost_per_success_change_vs_b0_percent": 100.59108381820727,
+      "list_price_cost_change_vs_b0_percent": -3.8261926899006315,
+      "list_price_cost_per_success_usd": 0.0439766,
+      "mean_list_price_cost_per_run_usd": 0.020522413333333333,
+      "mean_realized_ratio": 0.5785084667631132,
+      "method": "head_tail",
+      "runs": 150,
+      "strict_pair_b0_only_success": 37,
+      "strict_pair_mcnemar_holm_p": 1.0186340659856796e-10,
+      "strict_pair_mcnemar_p": 1.4551915228366852e-11,
+      "strict_pair_method_only_success": 0,
+      "success_rate": 0.4666666666666667,
+      "successes": 70,
+      "target_ratio": 0.6
+    },
+    "head_tail@0.9": {
+      "analysis_invalid_rows": 0,
+      "cost_per_success_change_pair_clustered_95ci_percent": [
+        2.316960594163245,
+        31.1695296689712
+      ],
+      "cost_per_success_change_vs_b0_percent": 15.093551451816323,
+      "list_price_cost_change_vs_b0_percent": 1.6922475156459393,
+      "list_price_cost_per_success_usd": 0.025232542635658915,
+      "mean_list_price_cost_per_run_usd": 0.021699986666666667,
+      "mean_realized_ratio": 0.8881496751990658,
+      "method": "head_tail",
+      "runs": 150,
+      "strict_pair_b0_only_success": 12,
+      "strict_pair_mcnemar_holm_p": 0.0517578125,
+      "strict_pair_mcnemar_p": 0.012939453125,
+      "strict_pair_method_only_success": 2,
+      "success_rate": 0.86,
+      "successes": 129,
+      "target_ratio": 0.9
+    },
+    "surface_ranked@0.2": {
+      "analysis_invalid_rows": 0,
+      "cost_per_success_change_pair_clustered_95ci_percent": [
+        -61.579913465702596,
+        -51.557356738177425
+      ],
+      "cost_per_success_change_vs_b0_percent": -57.30121329168703,
+      "list_price_cost_change_vs_b0_percent": -67.24476636074621,
+      "list_price_cost_per_success_usd": 0.009361071428571429,
+      "mean_list_price_cost_per_run_usd": 0.0069896,
+      "mean_realized_ratio": 0.187548007791245,
+      "method": "surface_ranked",
+      "runs": 150,
+      "strict_pair_b0_only_success": 18,
+      "strict_pair_mcnemar_holm_p": 0.0020122528076171875,
+      "strict_pair_mcnemar_p": 0.0004024505615234375,
+      "strict_pair_method_only_success": 2,
+      "success_rate": 0.7466666666666667,
+      "successes": 112,
+      "target_ratio": 0.2
+    },
+    "surface_ranked@0.4": {
+      "analysis_invalid_rows": 0,
+      "cost_per_success_change_pair_clustered_95ci_percent": [
+        -47.886490435884056,
+        -38.83097082295395
+      ],
+      "cost_per_success_change_vs_b0_percent": -43.93997656763088,
+      "list_price_cost_change_vs_b0_percent": -50.08354077939736,
+      "list_price_cost_per_success_usd": 0.012290323076923076,
+      "mean_list_price_cost_per_run_usd": 0.010651613333333334,
+      "mean_realized_ratio": 0.39688405095383733,
+      "method": "surface_ranked",
+      "runs": 150,
+      "strict_pair_b0_only_success": 10,
+      "strict_pair_mcnemar_holm_p": 0.11572265625,
+      "strict_pair_mcnemar_p": 0.03857421875,
+      "strict_pair_method_only_success": 2,
+      "success_rate": 0.8666666666666667,
+      "successes": 130,
+      "target_ratio": 0.4
+    },
+    "surface_ranked@0.8": {
+      "analysis_invalid_rows": 0,
+      "cost_per_success_change_pair_clustered_95ci_percent": [
+        -19.402653126929355,
+        -13.923300656014867
+      ],
+      "cost_per_success_change_vs_b0_percent": -16.725938418173424,
+      "list_price_cost_change_vs_b0_percent": -15.585197848559373,
+      "list_price_cost_per_success_usd": 0.018256594594594597,
+      "mean_list_price_cost_per_run_usd": 0.018013173333333334,
+      "mean_realized_ratio": 0.7909887269207935,
+      "method": "surface_ranked",
+      "runs": 150,
+      "strict_pair_b0_only_success": 2,
+      "strict_pair_mcnemar_holm_p": 1.0,
+      "strict_pair_mcnemar_p": 1.0,
+      "strict_pair_method_only_success": 3,
+      "success_rate": 0.9866666666666667,
+      "successes": 148,
+      "target_ratio": 0.8
+    },
+    "uniform@0.6": {
+      "analysis_invalid_rows": 0,
+      "cost_per_success_change_pair_clustered_95ci_percent": [
+        1.6848802037966377,
+        56.48918445922696
+      ],
+      "cost_per_success_change_vs_b0_percent": 22.715432803260626,
+      "list_price_cost_change_vs_b0_percent": -36.12073360926159,
+      "list_price_cost_per_success_usd": 0.026903526315789475,
+      "mean_list_price_cost_per_run_usd": 0.013631120000000002,
+      "mean_realized_ratio": 0.5789324455050946,
+      "method": "uniform",
+      "runs": 150,
+      "strict_pair_b0_only_success": 34,
+      "strict_pair_mcnemar_holm_p": 6.984919309616089e-10,
+      "strict_pair_mcnemar_p": 1.1641532182693481e-10,
+      "strict_pair_method_only_success": 0,
+      "success_rate": 0.5066666666666667,
+      "successes": 76,
+      "target_ratio": 0.6
+    },
+    "uniform@0.9": {
+      "analysis_invalid_rows": 0,
+      "cost_per_success_change_pair_clustered_95ci_percent": [
+        -8.35360385033102,
+        8.196380817601344
+      ],
+      "cost_per_success_change_vs_b0_percent": -1.2161660729404278,
+      "list_price_cost_change_vs_b0_percent": -9.335385299822041,
+      "list_price_cost_per_success_usd": 0.021656880597014927,
+      "mean_list_price_cost_per_run_usd": 0.019346813333333334,
+      "mean_realized_ratio": 0.8882330834860181,
+      "method": "uniform",
+      "runs": 150,
+      "strict_pair_b0_only_success": 8,
+      "strict_pair_mcnemar_holm_p": 0.453125,
+      "strict_pair_mcnemar_p": 0.2265625,
+      "strict_pair_method_only_success": 3,
+      "success_rate": 0.8933333333333333,
+      "successes": 134,
+      "target_ratio": 0.9
+    }
+  },
+  "completeness": {
+    "checksum_mismatch_rows": 0,
+    "duplicate_keys": [],
+    "expected_followup_rows": 1200,
+    "missing_keys": [],
+    "terminal_followup_rows": 1200,
+    "unexpected_keys": []
+  },
+  "historical_baseline_source_runs": 150,
+  "inference": {
+    "bootstrap_replicates": 10000,
+    "bootstrap_seed": 20261006,
+    "bootstrap_unit": "pair_id",
+    "multiplicity": "Holm across seven exploratory strict-pair comparisons"
+  },
+  "primary_baseline": "concurrent b0_repeat",
+  "status": "exploratory_post_main"
+}

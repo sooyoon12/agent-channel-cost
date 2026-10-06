@@ -1,0 +1,8 @@
+method,target_ratio,retained_success,retained_failure,removed_success,removed_failure,runs,paper_table_match
+uniform,0.6,76,0,0,74,150,True
+uniform,0.9,134,0,0,16,150,True
+head_tail,0.6,70,2,0,78,150,True
+head_tail,0.9,129,7,0,14,150,True
+surface_ranked,0.2,112,0,0,38,150,True
+surface_ranked,0.4,130,1,0,19,150,True
+surface_ranked,0.8,148,2,0,0,150,True

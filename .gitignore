@@ -24,3 +24,6 @@ paper/*.synctex.gz
 paper/*.toc
 paper/*.docx
 paper/*.pdf
+.codex-build-related/
+.codex-output/
+node_modules

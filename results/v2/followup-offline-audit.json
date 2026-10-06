@@ -1,0 +1,49 @@
+{
+  "cells": {
+    "head_tail@0.6": {
+      "gold_action_field_retention_rate": 0.48,
+      "gold_action_fields_retained": 72,
+      "mean_realized_ratio": 0.578378082037573,
+      "runs": 150
+    },
+    "head_tail@0.9": {
+      "gold_action_field_retention_rate": 0.9066666666666666,
+      "gold_action_fields_retained": 136,
+      "mean_realized_ratio": 0.888117368997549,
+      "runs": 150
+    },
+    "surface_ranked@0.2": {
+      "gold_action_field_retention_rate": 0.7466666666666667,
+      "gold_action_fields_retained": 112,
+      "mean_realized_ratio": 0.18156884896987177,
+      "runs": 150
+    },
+    "surface_ranked@0.4": {
+      "gold_action_field_retention_rate": 0.8733333333333333,
+      "gold_action_fields_retained": 131,
+      "mean_realized_ratio": 0.39231552188392255,
+      "runs": 150
+    },
+    "surface_ranked@0.8": {
+      "gold_action_field_retention_rate": 1.0,
+      "gold_action_fields_retained": 150,
+      "mean_realized_ratio": 0.7891751390795066,
+      "runs": 150
+    },
+    "uniform@0.6": {
+      "gold_action_field_retention_rate": 0.5066666666666667,
+      "gold_action_fields_retained": 76,
+      "mean_realized_ratio": 0.5787344301209131,
+      "runs": 150
+    },
+    "uniform@0.9": {
+      "gold_action_field_retention_rate": 0.8933333333333333,
+      "gold_action_fields_retained": 134,
+      "mean_realized_ratio": 0.8882286818029487,
+      "runs": 150
+    }
+  },
+  "plan_checksum": "84261724e0a3e5e99d1e0869624210caf087f7279f323a1f3c54cba3de266c0b",
+  "plan_runs": 1200,
+  "status": "offline_only_no_api_calls"
+}

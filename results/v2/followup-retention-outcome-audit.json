@@ -1,0 +1,85 @@
+{
+  "status": "offline_only_no_api_calls",
+  "input": "results/v2/followup-main.jsonl",
+  "terminal_compression_runs": 1050,
+  "sha256_matched_runs": 1050,
+  "paper_table_match": true,
+  "totals": {
+    "retained_success": 799,
+    "retained_failure": 12,
+    "removed_success": 0,
+    "removed_failure": 239
+  },
+  "cells": [
+    {
+      "method": "uniform",
+      "target_ratio": 0.6,
+      "retained_success": 76,
+      "retained_failure": 0,
+      "removed_success": 0,
+      "removed_failure": 74,
+      "runs": 150,
+      "paper_table_match": true
+    },
+    {
+      "method": "uniform",
+      "target_ratio": 0.9,
+      "retained_success": 134,
+      "retained_failure": 0,
+      "removed_success": 0,
+      "removed_failure": 16,
+      "runs": 150,
+      "paper_table_match": true
+    },
+    {
+      "method": "head_tail",
+      "target_ratio": 0.6,
+      "retained_success": 70,
+      "retained_failure": 2,
+      "removed_success": 0,
+      "removed_failure": 78,
+      "runs": 150,
+      "paper_table_match": true
+    },
+    {
+      "method": "head_tail",
+      "target_ratio": 0.9,
+      "retained_success": 129,
+      "retained_failure": 7,
+      "removed_success": 0,
+      "removed_failure": 14,
+      "runs": 150,
+      "paper_table_match": true
+    },
+    {
+      "method": "surface_ranked",
+      "target_ratio": 0.2,
+      "retained_success": 112,
+      "retained_failure": 0,
+      "removed_success": 0,
+      "removed_failure": 38,
+      "runs": 150,
+      "paper_table_match": true
+    },
+    {
+      "method": "surface_ranked",
+      "target_ratio": 0.4,
+      "retained_success": 130,
+      "retained_failure": 1,
+      "removed_success": 0,
+      "removed_failure": 19,
+      "runs": 150,
+      "paper_table_match": true
+    },
+    {
+      "method": "surface_ranked",
+      "target_ratio": 0.8,
+      "retained_success": 148,
+      "retained_failure": 2,
+      "removed_success": 0,
+      "removed_failure": 0,
+      "runs": 150,
+      "paper_table_match": true
+    }
+  ]
+}
