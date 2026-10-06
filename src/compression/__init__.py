@@ -4,6 +4,7 @@ from .base import CompressionResult, Compressor
 from .contract_aware import ContractAwareCompressor
 from .fixed_ratio import FixedRatioCompressor
 from .identity import IdentityCompressor
+from .surface_ranked import SurfaceRankedCompressor
 
 __all__ = [
     "CompressionResult",
@@ -11,4 +12,5 @@ __all__ = [
     "ContractAwareCompressor",
     "FixedRatioCompressor",
     "IdentityCompressor",
+    "SurfaceRankedCompressor",
 ]

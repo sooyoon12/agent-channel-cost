@@ -19,6 +19,7 @@ from src.compression.fixed_ratio import FixedRatioCompressor
 from src.compression.head_tail import HeadTailCompressor
 from src.compression.identity import IdentityCompressor
 from src.compression.query_aware import QueryAwareCompressor
+from src.compression.surface_ranked import SurfaceRankedCompressor
 from src.experiments.config import load_mapping_yaml
 from src.experiments.dotenv import environment_or_dotenv
 from src.experiments.logger import JsonlRunLogger
@@ -30,6 +31,8 @@ from src.experiments.v2 import (
     build_v2_heldout_baseline_plan,
     build_v2_heldout_compression_plan,
     build_v2_heldout_main_plan,
+    build_v2_followup_plan,
+    build_v2_followup_smoke_plan,
 )
 from src.tasks.export_v2 import verify_frozen_v2_dataset
 from src.tasks.v2 import audit_v2_candidates, generate_v2_candidates, split_v2_candidates
@@ -43,6 +46,8 @@ LIVE_MODES = {
     "heldout-query-aware",
     "heldout-oracle",
     "heldout-main",
+    "followup-main",
+    "followup-smoke",
 }
 
 
@@ -70,7 +75,7 @@ def _tokenizer(model):
     return tokenizer
 
 
-def _compressor(mode, task, method=None):
+def _compressor(mode, task, method=None, language=None):
     if mode == "heldout-main":
         mode = {
             "b0": "heldout-b0",
@@ -79,6 +84,21 @@ def _compressor(mode, task, method=None):
             "query_aware_filter": "heldout-query-aware",
             "oracle_contract": "heldout-oracle",
         }[method]
+    if mode in {"followup-main", "followup-smoke"}:
+        if method == "b0_repeat":
+            return IdentityCompressor()
+        if method == "uniform":
+            return FixedRatioCompressor()
+        if method == "head_tail":
+            return HeadTailCompressor()
+        if method == "surface_ranked":
+            # Only the raw request is available; no semantic form or gold path.
+            if language not in {"ko", "en"}:
+                raise ValueError("surface-ranked compression requires a language")
+            return SurfaceRankedCompressor(
+                task.ko_surface if language == "ko" else task.en_surface
+            )
+        raise ValueError(f"unsupported follow-up method: {method}")
     if mode.endswith("b0"):
         return IdentityCompressor()
     if mode == "heldout-uniform":
@@ -106,6 +126,7 @@ def main() -> None:
     experiment = load_mapping_yaml("configs/experiment.yaml")
     compression = load_mapping_yaml("configs/compression.yaml")
     v2 = load_mapping_yaml("configs/v2.yaml")
+    followup = load_mapping_yaml("configs/v2_followup.yaml")
     report = validate_live_configuration(
         model=model, pricing=pricing_config, experiment=experiment, compression=compression
     )
@@ -121,6 +142,23 @@ def main() -> None:
     development, held_out = split_v2_candidates(tasks)
     if args.mode == "preflight":
         audit = audit_v2_candidates(tasks)
+        followup_method_ratios = tuple(
+            (method, float(ratio))
+            for method, ratios in followup["methods"].items()
+            for ratio in str(ratios).split(",")
+        )
+        followup_plan = build_v2_followup_plan(
+            held_out,
+            method_ratios=followup_method_ratios,
+            order_seed=int(followup["order_seed"]),
+            include_repeat_baseline=bool(followup["repeat_baseline"]),
+        )
+        followup_smoke = build_v2_followup_smoke_plan(
+            held_out,
+            method_ratios=followup_method_ratios,
+            order_seed=int(followup["order_seed"]),
+            include_repeat_baseline=bool(followup["repeat_baseline"]),
+        )
         status = "ready" if report.ready and tokenizer_issue is None else "blocked"
         print(json.dumps(
             {
@@ -132,6 +170,11 @@ def main() -> None:
                 "development_runs": len(development) * 2,
                 "heldout_runs_per_method": len(held_out) * 2,
                 "i_h_in_scope": False,
+                "followup_runs": len(followup_plan),
+                "followup_smoke_runs": len(followup_smoke),
+                "followup_compression_cells": len(followup_method_ratios),
+                "followup_repeat_baseline": bool(followup["repeat_baseline"]),
+                "followup_budget_usd": followup["budget_usd"],
             },
             ensure_ascii=False,
             indent=2,
@@ -164,7 +207,24 @@ def main() -> None:
     else:
         selected = held_out
         verify_frozen_v2_dataset("data/v2", selected)
-        if args.mode == "heldout-main":
+        if args.mode in {"followup-main", "followup-smoke"}:
+            method_ratios = tuple(
+                (method, float(ratio))
+                for method, ratios in followup["methods"].items()
+                for ratio in str(ratios).split(",")
+            )
+            builder = (
+                build_v2_followup_plan
+                if args.mode == "followup-main"
+                else build_v2_followup_smoke_plan
+            )
+            plan = builder(
+                selected,
+                method_ratios=method_ratios,
+                order_seed=int(followup["order_seed"]),
+                include_repeat_baseline=bool(followup["repeat_baseline"]),
+            )
+        elif args.mode == "heldout-main":
             plan = build_v2_heldout_main_plan(
                 selected,
                 target_ratio=float(v2["target_ratio"]),
@@ -180,7 +240,13 @@ def main() -> None:
                 target_ratio=float(v2["target_ratio"]),
                 order_seed=int(v2["heldout_order_seed"]),
             )
-        budget_limit = Decimal(str(v2["heldout_budget_usd"]))
+        budget_limit = Decimal(
+            str(
+                followup["budget_usd"]
+                if args.mode in {"followup-main", "followup-smoke"}
+                else v2["heldout_budget_usd"]
+            )
+        )
 
     starting_cost = Decimal(0)
     if args.output.exists():
@@ -203,10 +269,16 @@ def main() -> None:
             )
             if observed_key != expected_key:
                 raise SystemExit(f"existing log does not match plan ordinal {ordinal}")
+            if record.get("target_ratio") != entry.target_ratio:
+                raise SystemExit(f"existing log ratio mismatch at plan ordinal {ordinal}")
+            expected_method = getattr(entry, "method", None)
+            if expected_method is not None and record.get("experiment_method") != expected_method:
+                raise SystemExit(f"existing log method mismatch at plan ordinal {ordinal}")
             expected_algorithm = _compressor(
                 args.mode,
                 next(t for t in selected if t.pair_id == entry.pair_id),
                 getattr(entry, "method", None),
+                entry.language,
             ).name
             if record.get("compression_algorithm") != expected_algorithm:
                 raise SystemExit(f"existing log compressor mismatch at plan ordinal {ordinal}")
@@ -233,7 +305,9 @@ def main() -> None:
             provider=OpenAIResponsesProvider(transport),
             tokenizer=tokenizer,
             pricing=pricing,
-            compressor=_compressor(args.mode, task, getattr(entry, "method", None)),
+            compressor=_compressor(
+                args.mode, task, getattr(entry, "method", None), entry.language
+            ),
             settings=RuntimeSettings(
                 model=model["model_id"],
                 temperature=model["temperature"],
@@ -241,7 +315,11 @@ def main() -> None:
                 max_turns=experiment["max_agent_turns"],
                 max_identical_calls=experiment["max_identical_tool_calls"],
                 max_request_input_tokens=experiment["max_request_input_tokens"],
-                target_ratio=float(v2["target_ratio"]),
+                target_ratio=float(
+                    entry.target_ratio
+                    if entry.target_ratio is not None
+                    else v2["target_ratio"]
+                ),
                 residual_absolute_tolerance=experiment["residual_tolerance"]["absolute_tokens"],
                 residual_fractional_tolerance=experiment["residual_tolerance"]["fraction_of_provider_input"],
                 residual_upper_bound_is_fatal=False,

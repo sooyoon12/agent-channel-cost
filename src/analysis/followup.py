@@ -226,7 +226,10 @@ def analyze_ratio_sweep(
                 "safe_and_cost_saving": safe,
             }
         )
-    for cell, adjusted in zip(cells, holm_adjust(raw_p_values), strict=True):
+    adjusted_values = holm_adjust(raw_p_values)
+    if len(cells) != len(adjusted_values):
+        raise AssertionError("Holm adjustment count mismatch")
+    for cell, adjusted in zip(cells, adjusted_values):
         cell["mcnemar"]["holm_adjusted_p"] = adjusted
 
     eligible = [cell for cell in cells if cell["safe_and_cost_saving"]]

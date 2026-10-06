@@ -9,6 +9,7 @@ from src.agent.runtime import AgentRuntime, ExperimentCondition, RuntimeSettings
 from src.compression.contract_aware import OracleContractCompressor
 from src.compression.head_tail import HeadTailCompressor
 from src.compression.query_aware import QueryAwareCompressor
+from src.compression.surface_ranked import SurfaceRankedCompressor
 from src.environment.tools import DeterministicToolEnvironment
 from src.experiments.provider import ScriptedProvider
 from src.tasks.generator import task_set_checksum
@@ -158,6 +159,24 @@ class V2CandidateTests(unittest.TestCase):
             self.assertTrue(result.record["success"], family)
             self.assertTrue(result.record["shadow"]["valid"], family)
             self.assertLess(result.record["realized_ratio"], 1.0)
+
+    def test_surface_ranked_uses_only_raw_request_and_retains_gold_at_point_eight(self):
+        for task in self.tasks:
+            environment = DeterministicToolEnvironment(task.hidden_state)
+            first = task.expected_tool_calls[0]
+            observation = environment.execute(first["name"], first["arguments"]).result
+            for prompt in (task.ko_surface, task.en_surface):
+                result = SurfaceRankedCompressor(prompt).compress(
+                    observation, target_ratio=0.8, tokenizer=WordCounter()
+                )
+                expected_id = task.expected_tool_calls[1]["arguments"].get(
+                    "record_id",
+                    task.expected_tool_calls[1]["arguments"].get("event_id"),
+                )
+                key = "records" if task.task_family == "long_observation" else "events"
+                id_key = "record_id" if task.task_family == "long_observation" else "event_id"
+                self.assertIn(expected_id, {item[id_key] for item in result.compressed[key]})
+                self.assertLessEqual(result.compressed_tokens, result.original_tokens)
 
 
 if __name__ == "__main__":

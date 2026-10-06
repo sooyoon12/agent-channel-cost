@@ -214,6 +214,7 @@ def plan_checksum(plan: Iterable[RunPlanEntry]) -> str:
             "condition": entry.condition.value,
             "repetition": entry.repetition,
             "target_ratio": entry.target_ratio,
+            "method": getattr(entry, "method", None),
         }
         for entry in plan
     ]

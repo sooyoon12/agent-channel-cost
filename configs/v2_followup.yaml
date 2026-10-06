@@ -1,0 +1,12 @@
+# Exploratory follow-up frozen before any API call for these cells.
+status: exploratory_post_main
+order_seed: 20261006
+methods:
+  uniform: "0.6,0.9"
+  head_tail: "0.6,0.9"
+  surface_ranked: "0.8,0.4,0.2"
+repeat_baseline: true
+baseline_source: results/v2/heldout-main-2026-09-21.jsonl
+bootstrap_unit: pair_id
+bootstrap_replicates: 10000
+budget_usd: 32.00

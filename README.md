@@ -67,3 +67,30 @@ surface를 함께 만들고, 첫 도구 결과를 읽어야 후속 호출을 완
 가격 출처: <https://developers.openai.com/api/docs/pricing>
 
 모델 출처: <https://developers.openai.com/api/docs/models/gpt-5.6-terra>
+
+## KSC v2 탐색적 보강 실험
+
+본 실험 이후 보강 코드는 동시기 B0 반복, 위치 기반 압축기의 유지율 0.6/0.9,
+그리고 정답·semantic form·안전 필드 선언을 받지 않는
+`surface_ranked_extract` 0.8/0.4/0.2를 추가한다. 총 1,200회를 하나의 순서로
+섞으며, 동시기 B0를 주 비교 기준으로 사용하고 기존 B0는 drift 진단에만 쓴다.
+설계는 `docs/v2-followup-decisions.md`, 실행 셀은
+`configs/v2_followup.yaml`에 고정했다.
+
+```bash
+# API를 호출하지 않는 전수 잔존 감사
+.venv/bin/python scripts/audit_v2_followup.py \
+  --output results/v2/followup-offline-audit.json
+
+# 아래 두 명령만 유료 provider 호출을 수행한다.
+.venv/bin/python scripts/run_v2_experiment.py followup-smoke \
+  --output results/v2/followup-smoke.jsonl \
+  --projected-cost-per-run 0.03
+
+.venv/bin/python scripts/run_v2_experiment.py followup-main \
+  --output results/v2/followup-main.jsonl \
+  --projected-cost-per-run 0.025 --workers 4
+
+.venv/bin/python scripts/analyze_v2_followup.py \
+  results/v2/followup-main.jsonl
+```

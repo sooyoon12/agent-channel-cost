@@ -16,6 +16,8 @@ from src.experiments.runner import (
     provider_error_is_retryable,
 )
 from src.tasks.generator import generate_task_set
+from src.tasks.v2 import generate_v2_candidates, split_v2_candidates
+from src.experiments.v2 import build_v2_followup_plan, build_v2_followup_smoke_plan
 
 
 class RunnerTests(unittest.TestCase):
@@ -81,6 +83,29 @@ class RunnerTests(unittest.TestCase):
         self.assertEqual({entry.condition for entry in plan}, {ExperimentCondition.TOOL_OBSERVATION})
         self.assertEqual({entry.target_ratio for entry in plan}, {0.8})
         self.assertEqual(len(build_contract_guard_smoke_plan(tasks)), 4)
+
+    def test_v2_followup_plan_has_seven_compression_cells_and_concurrent_b0(self):
+        _, tasks = split_v2_candidates(generate_v2_candidates())
+        plan = build_v2_followup_plan(tasks)
+        self.assertEqual(len(plan), 1200)
+        counts = Counter((entry.method, entry.target_ratio) for entry in plan)
+        self.assertEqual(
+            counts,
+            {
+                ("uniform", 0.6): 150,
+                ("uniform", 0.9): 150,
+                ("head_tail", 0.6): 150,
+                ("head_tail", 0.9): 150,
+                ("surface_ranked", 0.8): 150,
+                ("surface_ranked", 0.4): 150,
+                ("surface_ranked", 0.2): 150,
+                ("b0_repeat", 0.8): 150,
+            },
+        )
+        self.assertEqual(len(build_v2_followup_smoke_plan(tasks)), 32)
+        self.assertEqual(
+            plan_checksum(plan), plan_checksum(build_v2_followup_plan(tasks))
+        )
 
     def test_budget_warning_and_hard_stop(self):
         guard = BudgetGuard()

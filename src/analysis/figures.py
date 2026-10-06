@@ -172,3 +172,57 @@ def write_followup_success_figure(
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(svg, encoding="utf-8")
     return path
+
+
+def write_v2_frontier_figure(report: Mapping[str, Any], output_path: str | Path) -> Path:
+    """Render cost/run and cost/success changes for every v2 follow-up cell."""
+
+    cells = list(report["cells"].values())
+    width, height = 820, 460
+    left, right, top, bottom = 85, 30, 55, 90
+    plot_width = width - left - right
+    plot_height = height - top - bottom
+    values = [
+        float(cell["cost_per_success_change_vs_b0_percent"])
+        for cell in cells
+        if cell["cost_per_success_change_vs_b0_percent"] is not None
+    ] + [
+        float(cell["list_price_cost_change_vs_b0_percent"])
+        for cell in cells
+        if cell["list_price_cost_change_vs_b0_percent"] is not None
+    ]
+    bound = max(10.0, max((abs(value) for value in values), default=10.0) * 1.15)
+
+    def y(value: float) -> float:
+        return top + plot_height * (bound - value) / (2 * bound)
+
+    spacing = plot_width / max(1, len(cells))
+    marks = []
+    for index, cell in enumerate(cells):
+        x = left + spacing * (index + 0.5)
+        run_change = float(cell["list_price_cost_change_vs_b0_percent"])
+        success_change = float(cell["cost_per_success_change_vs_b0_percent"])
+        label = f'{cell["method"]} {float(cell["target_ratio"]):.1f}'
+        marks.append(
+            f'<line x1="{x - 12:.1f}" y1="{y(run_change):.1f}" x2="{x + 12:.1f}" y2="{y(success_change):.1f}" stroke="#94a3b8"/>'
+            f'<circle cx="{x - 12:.1f}" cy="{y(run_change):.1f}" r="6" fill="#2563eb"/>'
+            f'<circle cx="{x + 12:.1f}" cy="{y(success_change):.1f}" r="6" fill="#dc2626"/>'
+            f'<text x="{x:.1f}" y="{top + plot_height + 24:.1f}" text-anchor="middle" font-size="11">{escape(label)}</text>'
+            f'<text x="{x:.1f}" y="{top + plot_height + 41:.1f}" text-anchor="middle" font-size="10">success {100 * float(cell["success_rate"]):.1f}%</text>'
+        )
+    zero = y(0)
+    svg = (
+        f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" viewBox="0 0 {width} {height}">'
+        '<rect width="100%" height="100%" fill="white"/>'
+        f'<text x="{width / 2}" y="28" text-anchor="middle" font-size="19" font-weight="600">Run cost saving does not imply cost-per-success saving</text>'
+        f'<line x1="{left}" y1="{zero:.1f}" x2="{width-right}" y2="{zero:.1f}" stroke="#334155" stroke-dasharray="5 4"/>'
+        f'<text transform="translate(20 {height/2}) rotate(-90)" text-anchor="middle" font-size="12">Change vs B0 (%)</text>'
+        '<circle cx="585" cy="42" r="5" fill="#2563eb"/><text x="596" y="46" font-size="11">cost/run</text>'
+        '<circle cx="675" cy="42" r="5" fill="#dc2626"/><text x="686" y="46" font-size="11">cost/success</text>'
+        + "".join(marks)
+        + '</svg>\n'
+    )
+    path = Path(output_path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(svg, encoding="utf-8")
+    return path
